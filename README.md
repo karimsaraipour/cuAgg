@@ -4,6 +4,23 @@ A high-performance GPU aggregation kernel for GNNs.
 
 ## Getting Started
 
+**Downloading Repo**
+
+This project uses Professor [Scott Beamer](https://scottbeamer.net/)'s
+[GAP Benchmark Suite](https://github.com/sbeamer/gapbs/). To clone this repo,
+use this command.
+
+```bash
+git clone --recurse-submodules git@github.com:karimsaraipour/cuAgg.git
+```
+
+If you already cloned the repo without the submodules, don't worry! Just run
+this command.
+
+```bash
+git submodule update --init --recursive
+```
+
 **Installing CMake**
 
 ```bash
