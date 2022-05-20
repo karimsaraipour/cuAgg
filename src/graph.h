@@ -1,6 +1,7 @@
 #ifndef SRC__GRAPH_H
 #define SRC__GRAPH_H
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -23,6 +24,22 @@ struct Graph {
   IndexVecT index;    // size = N + 1
   NodeVecT neighbors; // size = M
   NodeT num_nodes;    // number of nodes
+
+  Graph() : Graph(IndexVecT(), NodeVecT(), 0) {}
+  Graph(IndexVecT index_, NodeVecT neighbors_, NodeT num_nodes_)
+      : index(index_), neighbors(neighbors_), num_nodes(num_nodes_) {}
 };
+
+/**
+ * Serialization
+ * Usage: file << g;
+ */
+std::ostream &operator<<(std::ostream &os, Graph &g);
+
+/**
+ * Deserialization
+ * Usage: file >> g;
+ */
+std::istream &operator>>(std::istream &is, Graph &g);
 
 #endif // SRC__GRAPH_H

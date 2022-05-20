@@ -1,7 +1,5 @@
 #include "generator.h"
 
-#include <iostream>
-
 #include <algorithm>
 #include <assert.h>
 #include <cinttypes>
@@ -78,5 +76,5 @@ GraphPtr generate_krongraph(int scale, int degree) {
     }
   }
 
-  return std::unique_ptr<Graph>(new Graph{index, neighbors, last_zero_idx});
+  return std::unique_ptr<Graph>(new Graph(index, neighbors, last_zero_idx));
 }

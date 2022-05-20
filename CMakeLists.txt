@@ -10,7 +10,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
-add_library(graph src/generator.cpp)
+add_library(graph src/graph.cpp src/generator.cpp)
 
 # Sample code: Generate graphs
 add_executable(example_generate_graph src/example_generate_graph.cpp)
