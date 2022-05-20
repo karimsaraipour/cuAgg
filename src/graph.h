@@ -8,8 +8,10 @@
 struct Graph;
 using NodeT = int;
 using IndexT = int;
+using FeatureT = float;
 using NodeVecT = std::vector<NodeT>;
-using IndexVecT = std::vector<NodeT>;
+using IndexVecT = std::vector<IndexT>;
+using FeatureVecT = std::vector<FeatureT>;
 using GraphPtr = std::unique_ptr<Graph>;
 
 /**

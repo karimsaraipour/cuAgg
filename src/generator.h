@@ -12,4 +12,9 @@
  */
 GraphPtr generate_krongraph(int scale, int degree);
 
+/**
+ * Generate feature vectors.
+ * Indexing convention: features[node id * number of features + feature id]
+ */
+
 #endif // SRC__GENERATOR_H
