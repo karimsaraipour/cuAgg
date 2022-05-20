@@ -14,6 +14,7 @@ You may need to run `chmod u+x cmake_install.sh` to give execute permission to
 the script.
 
 **Building Project**
+
 Make & enter a build folder for CMake
 
 ```bash
