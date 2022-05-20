@@ -29,5 +29,5 @@ rm -rf cmake-*
 cd $owd
 
 # Update cmake command
-echo "export PATH=$HOME/.local/bin:$HOME" >> $HOME/.bashrc
+echo "export PATH=$HOME/.local/bin:\$PATH" >> $HOME/.bashrc
 source $HOME/.bashrc

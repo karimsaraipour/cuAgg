@@ -59,8 +59,8 @@ GraphPtr generate_krongraph(int scale, int degree) {
   // Rebuild graph & squash zeros
   auto offsets = Builder::ParallelPrefixSum(degrees);
 
-  IndexVecT index(last_zero_idx + 1);
-  NodeVecT neighbors(offsets[last_zero_idx]);
+  IndexVec index(last_zero_idx + 1);
+  NodeVec neighbors(offsets[last_zero_idx]);
 
   // No point in making this parallel since the vectors are
   // one-writer-multiple-readers
@@ -80,13 +80,13 @@ GraphPtr generate_krongraph(int scale, int degree) {
   return std::unique_ptr<Graph>(new Graph(index, neighbors, last_zero_idx));
 }
 
-FeatureVecT generate_features(NodeT num_nodes, int num_features, FeatureT min,
-                              FeatureT max, unsigned seed) {
+FeatureVec generate_features(NodeT num_nodes, int num_features, FeatureT min,
+                             FeatureT max, unsigned seed) {
   std::mt19937 gen(seed);
   std::uniform_real_distribution<FeatureT> dist(min, max);
 
   IndexT num_elems = num_nodes * num_features;
-  FeatureVecT features(num_elems);
+  FeatureVec features(num_elems);
   for (IndexT i = 0; i < num_elems; i++)
     features[i] = dist(gen);
 

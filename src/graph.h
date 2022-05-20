@@ -9,9 +9,9 @@ struct Graph;
 using NodeT = int;
 using IndexT = int;
 using FeatureT = float;
-using NodeVecT = std::vector<NodeT>;
-using IndexVecT = std::vector<IndexT>;
-using FeatureVecT = std::vector<FeatureT>;
+using NodeVec = std::vector<NodeT>;
+using IndexVec = std::vector<IndexT>;
+using FeatureVec = std::vector<FeatureT>;
 using GraphPtr = std::unique_ptr<Graph>;
 
 /**
@@ -23,12 +23,12 @@ using GraphPtr = std::unique_ptr<Graph>;
  * }
  */
 struct Graph {
-  IndexVecT index;    // size = N + 1
-  NodeVecT neighbors; // size = M
-  NodeT num_nodes;    // number of nodes
+  IndexVec index;    // size = N + 1
+  NodeVec neighbors; // size = M
+  NodeT num_nodes;   // number of nodes
 
-  Graph() : Graph(IndexVecT(), NodeVecT(), 0) {}
-  Graph(IndexVecT index_, NodeVecT neighbors_, NodeT num_nodes_)
+  Graph() : Graph(IndexVec(), NodeVec(), 0) {}
+  Graph(IndexVec index_, NodeVec neighbors_, NodeT num_nodes_)
       : index(index_), neighbors(neighbors_), num_nodes(num_nodes_) {}
 };
 

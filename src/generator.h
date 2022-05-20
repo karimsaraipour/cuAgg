@@ -16,8 +16,8 @@ GraphPtr generate_krongraph(int scale, int degree);
  * Generate feature vectors.
  * Indexing convention: features[node id * number of features + feature id]
  */
-FeatureVecT generate_features(NodeT num_nodes, int num_features,
-                              FeatureT min = 0, FeatureT max = 1024,
-                              unsigned seed = 64);
+FeatureVec generate_features(NodeT num_nodes, int num_features,
+                             FeatureT min = 0, FeatureT max = 1024,
+                             unsigned seed = 64);
 
 #endif // SRC__GENERATOR_H
