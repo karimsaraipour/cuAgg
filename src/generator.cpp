@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <cinttypes>
 #include <memory>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -77,4 +78,17 @@ GraphPtr generate_krongraph(int scale, int degree) {
   }
 
   return std::unique_ptr<Graph>(new Graph(index, neighbors, last_zero_idx));
+}
+
+FeatureVecT generate_features(NodeT num_nodes, int num_features, FeatureT min,
+                              FeatureT max, unsigned seed) {
+  std::mt19937 gen(seed);
+  std::uniform_real_distribution<FeatureT> dist(min, max);
+
+  IndexT num_elems = num_nodes * num_features;
+  FeatureVecT features(num_elems);
+  for (IndexT i = 0; i < num_elems; i++)
+    features[i] = dist(gen);
+
+  return features;
 }

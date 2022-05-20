@@ -23,8 +23,6 @@ std::istream &operator>>(std::istream &is, Graph &g) {
   is.read(reinterpret_cast<char *>(&num_nodes), sizeof(NodeT));
   is.read(reinterpret_cast<char *>(&num_edges), sizeof(IndexT));
 
-  std::cout << num_nodes << " " << num_edges << std::endl;
-
   // Resize graph structures
   g.num_nodes = num_nodes;
   g.index.resize(num_nodes + 1);

@@ -8,10 +8,27 @@
 #include "graph.h"
 
 int main(int argc, char *argv[]) {
-  int scale = 4;  // 2^{scale} number of nodes
-  int degree = 3; // average degree
-  auto g = generate_krongraph(scale, degree);
+  constexpr int SCALE = 4;  // 2^{scale} number of nodes
+  constexpr int DEGREE = 3; // average degree
+  constexpr int NUM_FEATURES = 16;
+  constexpr NodeT PRINT_NODE_LIMIT = 5;
+  constexpr IndexT PRINT_EDGE_LIMIT = 10;
 
+  // Generate graph
+  auto g = generate_krongraph(SCALE, DEGREE);
+
+  // Generate feature vectors
+  auto features = generate_features(g->num_nodes, NUM_FEATURES);
+
+  std::cout << "Features" << std::endl;
+  for (NodeT n = 0; n < std::min(g->num_nodes, PRINT_NODE_LIMIT); n++) {
+    std::cout << "Node " << n << ": ";
+    for (IndexT f = 0; f < NUM_FEATURES; f++)
+      std::cout << features[n * NUM_FEATURES + f] << " ";
+    std::cout << std::endl;
+  }
+
+  // (De)serialization
   std::ofstream ofs("my.g", std::ofstream::out);
   ofs << *g;
   ofs.close();
@@ -22,8 +39,6 @@ int main(int argc, char *argv[]) {
   ifs.close();
 
   // Print out the input graph
-  constexpr IndexT PRINT_EDGE_LIMIT = 10;
-
   {
     IndexT edges = 0;
     std::cout << "Original graph" << std::endl;
