@@ -12,7 +12,7 @@ using FeatureT = float;
 using NodeVec = std::vector<NodeT>;
 using IndexVec = std::vector<IndexT>;
 using FeatureVec = std::vector<FeatureT>;
-using GraphPtr = std::unique_ptr<Graph>;
+using GraphPtr = std::shared_ptr<Graph>;
 
 /**
  * Basic CSR structure for graphs.

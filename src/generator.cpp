@@ -76,7 +76,7 @@ GraphPtr generate_krongraph(int scale, int degree) {
     }
   }
 
-  return std::unique_ptr<Graph>(new Graph(index, neighbors, last_zero_idx));
+  return std::shared_ptr<Graph>(new Graph(index, neighbors, last_zero_idx));
 }
 
 FeatureVec generate_features(NodeT num_nodes, int num_features, FeatureT min,

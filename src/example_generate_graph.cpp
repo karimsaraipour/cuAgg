@@ -33,7 +33,7 @@ int main(int argc, char *argv[]) {
   ofs << *g;
   ofs.close();
 
-  GraphPtr g_read = std::unique_ptr<Graph>(new Graph);
+  GraphPtr g_read = std::shared_ptr<Graph>(new Graph);
   std::ifstream ifs("my.g", std::ifstream::in);
   ifs >> *g_read;
   ifs.close();
