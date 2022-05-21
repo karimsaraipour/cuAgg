@@ -19,6 +19,10 @@ add_library(graph src/graph.cpp src/generator.cpp)
 add_library(agg src/aggregate.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
+# Utility: Graph generation
+add_executable(generate_graph src/generate_graph.cpp)
+target_link_libraries(generate_graph graph)
+
 # Sample code: Generate graphs
 add_executable(example_generate_graph src/example_generate_graph.cpp)
 target_link_libraries(example_generate_graph graph)

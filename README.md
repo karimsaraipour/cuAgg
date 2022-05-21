@@ -52,6 +52,17 @@ make
 
 The excutables can be found in the build folder.
 
+**Generating Graphs**
+To use Kronecker graph generator, run the `generate_graph` binary.
+
+```bash
+./generate_graph -g <scale> -k <degree> [-f out_file_name.g]
+```
+
+Such that the graph will have `2^{scale}` number of nodes (before pruning) and
+an average degere of `degree`. By default, it'll create a unique output file
+name, but there's the option name it yourself (with the `.g` extension).
+
 **Contributing to Project**
 
 The compile commands are all described in `CMakeLists.txt`.
