@@ -53,6 +53,7 @@ make
 The excutables can be found in the build folder.
 
 **Generating Graphs**
+
 To use Kronecker graph generator, run the `generate_graph` binary.
 
 ```bash
