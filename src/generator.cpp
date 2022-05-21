@@ -37,7 +37,7 @@ GraphPtr generate_krongraph(int scale, int degree) {
   pvector<DegreeNodePair> degree_nid_pairs(g.num_nodes());
 #pragma omp parallel for
   for (NodeT n = 0; n < g.num_nodes(); n++)
-    degree_nid_pairs[n] = std::make_pair(g.out_degree(n), n);
+    degree_nid_pairs[n] = std::make_pair(g.in_degree(n), n);
   std::sort(degree_nid_pairs.begin(), degree_nid_pairs.end(),
             std::greater<DegreeNodePair>());
 
@@ -68,11 +68,10 @@ GraphPtr generate_krongraph(int scale, int degree) {
     index[n] = offsets[n];
 
   for (NodeT n = 0; n < g.num_nodes(); n++) {
-    if (g.out_degree(n) != 0) {
+    if (g.in_degree(n) != 0) {
       auto u = rename[n]; // New name
-      for (const auto vw : g.out_neigh(n)) {
+      for (const auto vw : g.in_neigh(n))
         neighbors[offsets[u]++] = rename[vw.v];
-      }
       std::sort(neighbors.begin() + index[u], neighbors.begin() + index[u + 1]);
     }
   }

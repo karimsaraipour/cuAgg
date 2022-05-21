@@ -17,14 +17,14 @@ using GraphPtr = std::unique_ptr<Graph>;
 /**
  * Basic CSR structure for graphs.
  *
- * Accessing neighbors of node u for graph g
- * for (IndexT i = g;index[u]; i < g.index[u + 1]; i++) {
- *   NodeT v = g.neighbors[i]; // Edge from u to v
+ * Accessing the in-neighbors of node v for graph g
+ * for (IndexT i = g;index[v]; i < g.index[v + 1]; i++) {
+ *   NodeT u = g.neighbors[i]; // Edge from u to v
  * }
  */
 struct Graph {
   IndexVec index;    // size = N + 1
-  NodeVec neighbors; // size = M
+  NodeVec neighbors; // size = M; in-neighbors
   NodeT num_nodes;   // number of nodes
 
   Graph() : Graph(IndexVec(), NodeVec(), 0) {}

@@ -42,9 +42,9 @@ int main(int argc, char *argv[]) {
   {
     IndexT edges = 0;
     std::cout << "Original graph" << std::endl;
-    for (NodeT u = 0; u < g->num_nodes; u++) {
-      for (IndexT i = g->index[u]; i < g->index[u + 1]; i++) {
-        std::cout << u << " -> " << g->neighbors[i] << std::endl;
+    for (NodeT v = 0; v < g->num_nodes; v++) {
+      for (IndexT i = g->index[v]; i < g->index[v + 1]; i++) {
+        std::cout << g->neighbors[i] << " -> " << v << std::endl;
 
         edges++;
         if (edges == PRINT_EDGE_LIMIT)
@@ -58,9 +58,9 @@ int main(int argc, char *argv[]) {
   {
     IndexT edges = 0;
     std::cout << "Read graph" << std::endl;
-    for (NodeT u = 0; u < g_read->num_nodes; u++) {
-      for (IndexT i = g_read->index[u]; i < g_read->index[u + 1]; i++) {
-        std::cout << u << " -> " << g_read->neighbors[i] << std::endl;
+    for (NodeT v = 0; v < g_read->num_nodes; v++) {
+      for (IndexT i = g_read->index[v]; i < g_read->index[v + 1]; i++) {
+        std::cout << g_read->neighbors[i] << " -> " << v << std::endl;
 
         edges++;
         if (edges == PRINT_EDGE_LIMIT)

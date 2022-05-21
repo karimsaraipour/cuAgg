@@ -19,7 +19,7 @@ __global__ void dummy_aggregate_kernel(const IndexT * const index,
     printf("The first %d nodes' edges are:\n", min(num_nodes, PRINT_NODES_MAX));
     for (NodeT n = 0; n < min(num_nodes, PRINT_NODES_MAX); n++)
       for (IndexT i = index[n]; i < index[n + 1]; i++)
-        printf("%d -> %d\n", n, neighbors[i]);
+        printf("%d -> %d\n", neighbors[i], n);
 
     // Print feature vectors
     printf("The first %d nodes' feature vectors are:\n",
@@ -27,7 +27,7 @@ __global__ void dummy_aggregate_kernel(const IndexT * const index,
     for (NodeT n = 0; n < min(num_nodes, PRINT_NODES_MAX); n++) {
       printf("Node %d: ", n);
       for (int f = 0; f < num_features; f++)
-        printf("%d ", features[n * num_features + f]);
+        printf("%f ", features[n * num_features + f]);
       printf("\n");
     }
   }
