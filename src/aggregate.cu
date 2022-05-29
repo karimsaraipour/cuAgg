@@ -1,11 +1,10 @@
 // #include "aggregate.cuh"
 
-#include <cmath>
-#include <cstdio>
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <iostream>
+#include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <time.h>
+#include <assert.h>
 
 // notes
 // build a matrix of feature vectors
@@ -15,15 +14,26 @@
 #endif
 
 #ifndef FEATURE_DIM
-#define FEATURE_DIM 16
+#define FEATURE_DIM 32
 #endif
 
+// cuda error checking
+#define cudaErrCheck(__status) { cudaAssert(__status, __FILE__, __LINE__); }
+inline void cudaAssert(cudaError_t __status, const char *file, int line) {
+    if (__status != cudaSuccess) {
+        fprintf(stderr, "[%s, %d]: %s - Terminating...\n", file, line, cudaGetErrorString(__status));
+        exit(EXIT_FAILURE);
+    }
+}
+
 // malloc error check
-// #define // MALLOC_ERR_CHECK(pointer)                               \
-//     if (pointer == NULL) {                                      \
-//         printf("Error: [%s, %s] Memory allocation failed!\n");  \
-//         return 1;                                               \
-//     }
+#define mallocErrCheck(ptr) { memAssert(ptr, __FILE__, __LINE__); }
+inline void memAssert(void *ptr, const char *file, int line) {
+    if (ptr == NULL) {
+        fprintf(stderr, "[%s, %s]: Host memory allocation failed. Terminating...\n", file, line);
+        exit(EXIT_FAILURE);
+    }
+}
 
 typedef bool ADJ_DTYPE;
 typedef float FEATURE_DTYPE;
@@ -47,12 +57,10 @@ struct CSR {
 // grid dimensions analogous to feature matrix dimensions (n x d)
 // each of the n nodes has a d-dimensional feature vector
 
-
-
 CSR::CSR(ADJ_DTYPE *adj_matrix) {
 
     row_idx = static_cast<int *>(malloc(row_idx_len * sizeof(int)));
-    //// MALLOC_ERR_CHECK(row_idx);
+    mallocErrCheck(row_idx);
 
     // nnz
     col_idx_len = 0;
@@ -62,7 +70,7 @@ CSR::CSR(ADJ_DTYPE *adj_matrix) {
                 ++col_idx_len;
 
     col_idx = static_cast<int *>(malloc(col_idx_len * sizeof(int)));
-    //// MALLOC_ERR_CHECK(col_idx);
+    mallocErrCheck(col_idx);
 
     int c_idx = 0;
     for (int r = 0; r < NNODES; ++r) {
@@ -78,19 +86,19 @@ CSR::CSR(ADJ_DTYPE *adj_matrix) {
 
 void CSR::dump() {
 
-    std::cout << "CSR:" << std::endl;
-    std::cout << "COL INDEX ARRAY: ";
+    printf("CSR:\n");
+    printf("COL INDEX ARRAY: ");
     for (int c = 0; c < col_idx_len; ++c)
-        std::cout << col_idx[c] << " ";
-    std::cout << std::endl;
+        printf("%d ", col_idx[c]);
+    printf("\n");
 
-    std::cout << "ROW INDEX ARRAY: ";
+    printf("ROW INDEX ARRAY: ");
     for (int r = 0; r < row_idx_len; ++r)
-        std::cout << row_idx[r] << " ";
-    std::cout << std::endl;
+        printf("%d ", row_idx[r]);
+    printf("\n");
 
-    std::cout << "COL INDEX LENGTH: " << col_idx_len << std::endl;
-    std::cout << "ROW INDEX LENGTH: " << row_idx_len << std::endl;
+    printf("COL INDEX LENGTH: %d\n", col_idx_len);
+    printf("ROW INDEX LENGTH: %d\n", row_idx_len);
 }
 
 struct CSC {
@@ -111,7 +119,7 @@ struct CSC {
 CSC::CSC(ADJ_DTYPE *adj_matrix) {
 
     col_idx = static_cast<int *>(malloc(col_idx_len * sizeof(int)));
-    //// MALLOC_ERR_CHECK(col_idx);
+    mallocErrCheck(col_idx);
 
     row_idx_len = 0;
     for (int r = 0; r < NNODES; ++r)
@@ -120,7 +128,7 @@ CSC::CSC(ADJ_DTYPE *adj_matrix) {
                 ++row_idx_len;
 
     row_idx = static_cast<int *>(malloc(row_idx_len * sizeof(int)));
-    //// MALLOC_ERR_CHECK(col_idx);
+    mallocErrCheck(row_idx);
 
     int r_idx = 0;
     for (int c = 0; c < NNODES; ++c) {
@@ -136,25 +144,25 @@ CSC::CSC(ADJ_DTYPE *adj_matrix) {
 
 void CSC::dump() {
 
-    std::cout << "CSC:" << std::endl;
-    std::cout << "COL INDEX ARRAY: ";
+    printf("CSC:\n");
+    printf("COL INDEX ARRAY: ");
     for (int c = 0; c < col_idx_len; ++c)
-        std::cout << col_idx[c] << " ";
-    std::cout << std::endl;
+        printf("%d ", col_idx[c]);
+    printf("\n");
 
-    std::cout << "ROW INDEX ARRAY: ";
+    printf("ROW INDEX ARRAY: ");
     for (int r = 0; r < row_idx_len; ++r)
-        std::cout << row_idx[r] << " ";
-    std::cout << std::endl;
+        printf("%d ", row_idx[r]);
+    printf("\n");
 
-    std::cout << "COL INDEX LENGTH: " << col_idx_len << std::endl;
-    std::cout << "ROW INDEX LENGTH: " << row_idx_len << std::endl;
+    printf("COL INDEX LENGTH: %d\n", col_idx_len);
+    printf("ROW INDEX LENGTH: %d\n", row_idx_len);
 }
 
 // initialize adjacency matrix
 void adj_matrix_init(ADJ_DTYPE *adj_matrix) {
 
-    std::srand(std::time(nullptr));
+    srand(time(NULL));
 
     for (int r = 0; r < NNODES; ++r)
         for (int c = 0; c < NNODES; ++c) {
@@ -162,41 +170,41 @@ void adj_matrix_init(ADJ_DTYPE *adj_matrix) {
                 adj_matrix[r * NNODES + c] = 0;
                 continue;
             }
-            adj_matrix[r * NNODES + c] = static_cast<ADJ_DTYPE>(roundf(
-                static_cast<float>(std::rand()) / static_cast<float>(RAND_MAX)));
+            adj_matrix[r * NNODES + c] = 
+                static_cast<ADJ_DTYPE>(roundf(static_cast<float>(rand()) / static_cast<float>(RAND_MAX)));
         }
 }
 
 // initialize feature matrix
 void feature_matrix_init(FEATURE_DTYPE *feature_matrix) {
 
-    std::srand(std::time(nullptr));
+    srand(time(NULL));
 
     for (int n = 0; n < NNODES; ++n)
         for (int d = 0; d < FEATURE_DIM; ++d)
             feature_matrix[n * FEATURE_DIM + d] =
-                static_cast<FEATURE_DTYPE>(std::rand()) / static_cast<FEATURE_DTYPE>(RAND_MAX) - 0.5f;
+                static_cast<FEATURE_DTYPE>(rand()) / static_cast<FEATURE_DTYPE>(RAND_MAX) - 0.5f;
 }
 
 // print adjacency matrix
 void print_adj_matrix(ADJ_DTYPE *adj_matrix) {
 
-    std::cout << "ADJ MATRIX:" << std::endl;
+    printf("ADJ MATRIX:\n");
     for (int r = 0; r < NNODES; ++r) {
         for (int c = 0; c < NNODES; ++c)
-            std::cout << adj_matrix[r * NNODES + c] << " ";
-        std::cout << std::endl;
+            printf("%d ", adj_matrix[r * NNODES + c]);
+        printf("\n");
     }
 }
 
 // print feature matrix
 void print_feature_matrix(FEATURE_DTYPE *feature_matrix) {
 
-    std::cout << "FEATURES:" << std::endl;
+    printf("FEATURES:\n");
     for (int n = 0; n < NNODES; ++n) {
         for (int d = 0; d < FEATURE_DIM; ++d)
-            std::cout << feature_matrix[n * FEATURE_DIM + d] << " ";
-        std::cout << std::endl;
+            printf("%.3f ", feature_matrix[n * FEATURE_DIM + d]);
+        printf("\n");
     }
 }
 
@@ -205,8 +213,14 @@ void print_feature_matrix(FEATURE_DTYPE *feature_matrix) {
 __device__ int *get_neighbors(int index, int *col_idx, int *row_idx, int &neighbor_length) {
     int num_neighbors = row_idx[index + 1] - row_idx[index];
 
+    // sigh, this is a lot of mallocing
+    // also need to error check a malloc call on device
+    // TODO(maybe): fix this
     int *neighbors = static_cast<int *>(malloc(num_neighbors * sizeof(int)));
-    // MALLOC_ERR_CHECK(neighbors);
+    if (neighbors == NULL) {
+        printf("[%s, %d]: Malloc call on device returned NULL. Terminating...\n", __FILE__, __LINE__);
+        assert(0);
+    }
 
     int start = row_idx[index];
     for (int i = 0; i < num_neighbors; i++) {
@@ -217,7 +231,6 @@ __device__ int *get_neighbors(int index, int *col_idx, int *row_idx, int &neighb
     neighbor_length = num_neighbors;
     return neighbors;
 }
-
 
 
 __global__ void dummy_aggregate_kernel(int *col_idx, int *row_idx, FEATURE_DTYPE *src_features, FEATURE_DTYPE *dest_features) {
@@ -251,9 +264,6 @@ __global__ void dummy_aggregate_kernel(int *col_idx, int *row_idx, FEATURE_DTYPE
 }
 
 int main(void) {
-    // set display precision
-    std::cout << std::fixed;
-    std::cout << std::setprecision(4);
 
     // pointer to the adjacency matrix
     ADJ_DTYPE *adj_matrix;
@@ -267,14 +277,14 @@ int main(void) {
 
     // allocate memory for the adjacency matrix
     adj_matrix = static_cast<ADJ_DTYPE *>(malloc(size_adj * sizeof(ADJ_DTYPE)));
-    // MALLOC_ERR_CHECK(adj_matrix);
+    mallocErrCheck(adj_matrix);
 
     // allocate memory for feature matrix
     original_feature_matrix = static_cast<FEATURE_DTYPE *>(malloc(size_fm * sizeof(FEATURE_DTYPE)));
-    // MALLOC_ERR_CHECK(original_feature_matrix);
+    mallocErrCheck(original_feature_matrix);
 
     agg_feature_matrix = static_cast<FEATURE_DTYPE *>(malloc(size_fm * sizeof(FEATURE_DTYPE)));
-    // MALLOC_ERR_CHECK(agg_feature_matrix);
+    mallocErrCheck(agg_feature_matrix);
 
     // init adjacency matrix
     adj_matrix_init(adj_matrix);
@@ -283,44 +293,43 @@ int main(void) {
     feature_matrix_init(original_feature_matrix);
 
     // show adjacency matrix
-    print_adj_matrix(adj_matrix);
+    // print_adj_matrix(adj_matrix);
 
     // obtain CSR representation of adjacency matrix
     CSR csr(adj_matrix);
-    csr.dump();
-
-    // obtain CSC representation of adjacency matrix
-    // CSC csc(adj_matrix);
-    // csc.dump();
+    //csr.dump();
 
     // device pointers
     FEATURE_DTYPE *d_src_matrix, *d_dest_matrix;
     int *d_col_idx, *d_row_idx;
 
     // allocate memory on device
-    cudaMalloc((void **)&d_src_matrix, size_fm * sizeof(FEATURE_DTYPE));
-    cudaMalloc((void **)&d_dest_matrix, size_fm * sizeof(FEATURE_DTYPE));
+    cudaErrCheck( cudaMalloc((void **)&d_src_matrix, size_fm * sizeof(FEATURE_DTYPE)) );
+    cudaErrCheck( cudaMalloc((void **)&d_dest_matrix, size_fm * sizeof(FEATURE_DTYPE)) );
 
-    cudaMalloc((void **)&d_col_idx, csr.col_idx_len * sizeof(int));
-    cudaMalloc((void **)&d_row_idx, csr.row_idx_len * sizeof(int));
+    cudaErrCheck( cudaMalloc((void **)&d_col_idx, csr.col_idx_len * sizeof(int)) );
+    cudaErrCheck( cudaMalloc((void **)&d_row_idx, csr.row_idx_len * sizeof(int)) );
 
     // memcpy
-    cudaMemcpy(d_src_matrix, original_feature_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_dest_matrix, agg_feature_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_col_idx, csr.col_idx, csr.col_idx_len * sizeof(int), cudaMemcpyHostToDevice);
-    cudaMemcpy(d_row_idx, csr.row_idx, csr.row_idx_len * sizeof(int), cudaMemcpyHostToDevice);
+    cudaErrCheck( cudaMemcpy(d_src_matrix, original_feature_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyHostToDevice) );
+    cudaErrCheck( cudaMemcpy(d_dest_matrix, agg_feature_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyHostToDevice) );
+    cudaErrCheck( cudaMemcpy(d_col_idx, csr.col_idx, csr.col_idx_len * sizeof(int), cudaMemcpyHostToDevice) );
+    cudaErrCheck( cudaMemcpy(d_row_idx, csr.row_idx, csr.row_idx_len * sizeof(int), cudaMemcpyHostToDevice) );
 
     // block and grid sizes
     dim3 dimBlock(NNODES, FEATURE_DIM);
 
     // invoke kernel
     dummy_aggregate_kernel<<<1, dimBlock>>>(d_col_idx, d_row_idx, d_src_matrix, d_dest_matrix);
+    cudaErrCheck( cudaPeekAtLastError() );
 
     // copy aggregate feature matrix back into cpu
-    cudaMemcpy(agg_feature_matrix, d_dest_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyDeviceToHost);
+    cudaErrCheck( cudaMemcpy(agg_feature_matrix, d_dest_matrix, size_fm * sizeof(FEATURE_DTYPE), cudaMemcpyDeviceToHost) );
     
     // show feature matrix
-    print_feature_matrix(original_feature_matrix);
+    // print_feature_matrix(original_feature_matrix);
+    // show aggregated feature matrix
+    // print_feature_matrix(agg_feature_matrix);
 
     // aggregate_sum(csr.col_idx, csr.row_idx, original_feature_matrix, agg_feature_matrix);
 
@@ -329,8 +338,7 @@ int main(void) {
     cudaFree(d_dest_matrix);
     cudaFree(d_col_idx);
     cudaFree(d_row_idx);
-
-    print_feature_matrix(agg_feature_matrix);
+    
     // free adjacency matrix on exit
     free(adj_matrix);
     // free feature matrix
