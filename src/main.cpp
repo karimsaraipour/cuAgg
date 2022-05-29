@@ -3,7 +3,6 @@
 #include <ctime>
 #include <iomanip>
 #include <iostream>
-#include <vector>
 
 // notes
 // build a matrix of feature vectors
@@ -240,6 +239,9 @@ void aggregate_sum(int *col_idx, int *row_idx, FEATURE_DTYPE *src_features, FEAT
                 dest_features[v * FEATURE_DIM + c] += src_features[neighbor * FEATURE_DIM + c];
             }
         }
+
+        // free neighbors
+        free(neighbors);
     }
 }
 
