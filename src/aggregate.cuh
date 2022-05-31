@@ -4,20 +4,20 @@
 #include "graph.h"
 
 /**
- * Dummy GPU implementation of aggregate (proof-of-concept)
- * Note: It's missing the output feature array.
+ * Naive aggregate kernel
+ * Each thread is assigned a vertex (offset by num thread.X) and a feature
+ * (offset by num thread.Y).
  */
-__global__ void dummy_aggregate_kernel(const IndexT *const index,
-                                       const NodeT *const neighbors,
-                                       const FeatureT *const features,
-                                       const NodeT num_nodes,
-                                       const int num_features);
+__global__ void
+aggregate_naive(const IndexT *const index, const NodeT *const neighbors,
+                const FeatureT *const in_features, FeatureT *const out_features,
+                const NodeT num_nodes, const IndexT num_features);
 
 /**
  * Parallel CPU implementation of aggregate.
  * Used for validation of GPU kernels.
  */
-void aggregate_cpu(const GraphPtr g, const FeatureVec &features,
-                   FeatureVec &out_features, int num_features);
+void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
+                   FeatureVec &out_features, IndexT num_features);
 
 #endif // SRC__AGGREGATE_CUH

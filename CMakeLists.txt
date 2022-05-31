@@ -39,7 +39,12 @@ target_link_libraries(example_generate_graph graph)
 add_executable(example_aggregate src/example_aggregate.cu)
 target_link_libraries(example_aggregate graph agg)
 
-# Test: Check parallel CPU aggregatec
+# Test: Check parallel CPU aggregate
 add_executable(test_aggregate_cpu tests/test_aggregate_cpu.cu)
 target_link_libraries(test_aggregate_cpu graph agg)
 add_test(NAME aggregate_cpu COMMAND test_aggregate_cpu)
+
+# Test: Check parallel CPU aggregate
+add_executable(test_aggregate_naive tests/test_aggregate_naive.cu)
+target_link_libraries(test_aggregate_naive graph agg)
+add_test(NAME aggregate_naive COMMAND test_aggregate_naive)

@@ -40,8 +40,8 @@ int main(int argc, char *argv[]) {
   CUDA_ERRCHK(cudaMemcpy(cu_features, features.data(), features_size,
                          cudaMemcpyHostToDevice));
 
-  dummy_aggregate_kernel<<<1, 32>>>(cu_index, cu_neighbors, cu_features,
-                                    g->num_nodes, NUM_FEATURES);
+  /*dummy_aggregate_kernel<<<1, 32>>>(cu_index, cu_neighbors, cu_features,*/
+  /*g->num_nodes, NUM_FEATURES);*/
 
   // Free memory
   CUDA_ERRCHK(cudaFree(cu_index));
