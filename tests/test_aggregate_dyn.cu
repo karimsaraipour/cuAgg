@@ -37,7 +37,7 @@ void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
 int main() {
   constexpr int TEST_SCALE = 14;
   constexpr int TEST_DEGREE = 10;
-  constexpr IndexT TEST_NUM_FEATURES = 1024;
+  constexpr IndexT TEST_NUM_FEATURES = 64;
 
   constexpr int BLOCK_DIM_X = 16;
   constexpr int BLOCK_DIM_Y = 32;
@@ -77,9 +77,9 @@ int main() {
   dim3 dim_grid((g->num_nodes + BLOCK_DIM_X - 1) / BLOCK_DIM_X,
                 (TEST_NUM_FEATURES + BLOCK_DIM_Y - 1) / BLOCK_DIM_Y);
 
-  aggregate_naive<<<dim_grid, dim_block>>>(cu_index, cu_neighbors,
-                                           cu_in_features, cu_out_features,
-                                           g->num_nodes, TEST_NUM_FEATURES);
+  aggregate_dyn<<<64, 32 * 32>>>(cu_index, cu_neighbors,
+                                     cu_in_features, cu_out_features,
+                                     g->num_nodes, TEST_NUM_FEATURES);
 
   // Copy results to CPU memory
   FeatureT *test_features = new FeatureT[features.size()];

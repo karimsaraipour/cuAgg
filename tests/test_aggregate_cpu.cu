@@ -1,10 +1,16 @@
 #include <assert.h>
 #include <cstdlib>
 #include <utility>
+#include <math.h>
 
 #include "../src/aggregate.cuh"
 #include "../src/generator.h"
 #include "../src/graph.h"
+
+bool feq(float f1, float f2) {
+  return fabs(f1 - f2) < 0.001;
+}
+
 
 void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {
@@ -49,7 +55,7 @@ int main() {
   aggregate_cpu(g, features, test_features, TEST_NUM_FEATURES);
 
   for (size_t i = 0; i < features.size(); i++)
-    assert(test_features[i] == oracle_features[i] && "features don't match");
+    assert(feq(test_features[i], oracle_features[i]) && "features don't match");
 
   return EXIT_SUCCESS;
 }

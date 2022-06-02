@@ -1,7 +1,5 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 
-# option(ENABLE_TESTS "Enable testing" OFF)
-
 project(
   cuAgg
   VERSION 0.1
@@ -18,9 +16,8 @@ if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 70)
 endif()
 
-# if(${ENABLE_TESTS})
+# Build tests
 enable_testing()
-# endif()
 
 # Libraries
 add_library(graph src/graph.cpp src/generator.cpp)
@@ -44,7 +41,12 @@ add_executable(test_aggregate_cpu tests/test_aggregate_cpu.cu)
 target_link_libraries(test_aggregate_cpu graph agg)
 add_test(NAME aggregate_cpu COMMAND test_aggregate_cpu)
 
-# Test: Check parallel CPU aggregate
+# Test: Check GPU naive aggregate
 add_executable(test_aggregate_naive tests/test_aggregate_naive.cu)
 target_link_libraries(test_aggregate_naive graph agg)
 add_test(NAME aggregate_naive COMMAND test_aggregate_naive)
+
+# Test: Check GPU dyn aggregate
+add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
+target_link_libraries(test_aggregate_dyn graph agg)
+add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)

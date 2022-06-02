@@ -4,12 +4,29 @@
 #include "graph.h"
 
 /**
- * Naive aggregate kernel
- * Each thread is assigned a vertex (offset by num thread.X) and a feature
+ * Naive aggregate kernel.
+ * Each thread is assigned a node (offset by num thread.X) and a feature
  * (offset by num thread.Y).
  */
 __global__ void
 aggregate_naive(const IndexT *const index, const NodeT *const neighbors,
+                const FeatureT *const in_features, FeatureT *const out_features,
+                const NodeT num_nodes, const IndexT num_features);
+
+/**
+ * Dynamic aggergate kernel.
+ * Each thread block is assigned to a node (offset by num thread blocks) and 
+ * given N warps.
+ * Each of the N warps will work on one neighbor (offset by N).
+ * 
+ * Assumption:
+ *  Initialize kernel with threads % warpSize == 0
+ * 
+ * Usage: 
+ *  aggregate_dyn<<<NUMBER OF THREAD BLOCKS, WARPS PER NODE * warpSize>>>(...)
+ */
+__global__ void
+aggregate_dyn(const IndexT *const index, const NodeT *const neighbors,
                 const FeatureT *const in_features, FeatureT *const out_features,
                 const NodeT num_nodes, const IndexT num_features);
 
