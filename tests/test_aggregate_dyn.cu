@@ -1,16 +1,14 @@
 #include <assert.h>
 #include <cstdlib>
-#include <utility>
 #include <math.h>
+#include <utility>
 
-#include "../src/aggregate.cuh"
 #include "../src/cuda.cuh"
-#include "../src/generator.h"
-#include "../src/graph.h"
+#include "../src/graph/generator.h"
+#include "../src/graph/graph.h"
+#include "../src/kernels/aggregate.cuh"
 
-bool feq(float f1, float f2) {
-  return fabs(f1 - f2) < 0.001;
-}
+bool feq(float f1, float f2) { return fabs(f1 - f2) < 0.001; }
 
 void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {
@@ -77,9 +75,9 @@ int main() {
   dim3 dim_grid((g->num_nodes + BLOCK_DIM_X - 1) / BLOCK_DIM_X,
                 (TEST_NUM_FEATURES + BLOCK_DIM_Y - 1) / BLOCK_DIM_Y);
 
-  aggregate_dyn<<<64, 32 * 32>>>(cu_index, cu_neighbors,
-                                     cu_in_features, cu_out_features,
-                                     g->num_nodes, TEST_NUM_FEATURES);
+  aggregate_dyn<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
+                                 cu_out_features, g->num_nodes,
+                                 TEST_NUM_FEATURES);
 
   // Copy results to CPU memory
   FeatureT *test_features = new FeatureT[features.size()];

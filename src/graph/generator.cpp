@@ -8,8 +8,8 @@
 #include <string>
 #include <vector>
 
-#include "../deps/gapbs/src/builder.h"
-#include "../deps/gapbs/src/graph.h"
+#include "../../deps/gapbs/src/builder.h"
+#include "../../deps/gapbs/src/graph.h"
 
 GraphPtr generate_krongraph(int scale, int degree) {
   using WeightT = float;

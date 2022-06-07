@@ -20,20 +20,20 @@ endif()
 enable_testing()
 
 # Libraries
-add_library(graph src/graph.cpp src/generator.cpp)
-add_library(agg src/aggregate.cu src/aggregate_cpu.cu)
+add_library(graph src/graph/graph.cpp src/graph/generator.cpp)
+add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Utility: Graph generation
-add_executable(generate_graph src/generate_graph.cpp)
+add_executable(generate_graph utils/generate_graph.cpp)
 target_link_libraries(generate_graph graph)
 
 # Sample code: Generate graphs
-add_executable(example_generate_graph src/example_generate_graph.cpp)
+add_executable(example_generate_graph examples/example_generate_graph.cpp)
 target_link_libraries(example_generate_graph graph)
 
 # Sample code: Running CUDA kernels
-add_executable(example_aggregate src/example_aggregate.cu)
+add_executable(example_aggregate examples/example_aggregate.cu)
 target_link_libraries(example_aggregate graph agg)
 
 # Test: Check parallel CPU aggregate

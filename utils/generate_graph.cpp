@@ -5,8 +5,8 @@
 #include <string>
 #include <unistd.h>
 
-#include "generator.h"
-#include "graph.h"
+#include "../src/graph/generator.h"
+#include "../src/graph/graph.h"
 
 struct GraphProp {
   int scale;

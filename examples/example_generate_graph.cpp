@@ -4,8 +4,8 @@
 #include <iostream>
 #include <memory>
 
-#include "generator.h"
-#include "graph.h"
+#include "../src/graph/generator.h"
+#include "../src/graph/graph.h"
 
 int main(int argc, char *argv[]) {
   constexpr int SCALE = 4;  // 2^{scale} number of nodes

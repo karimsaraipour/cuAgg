@@ -1,16 +1,13 @@
 #include <assert.h>
 #include <cstdlib>
-#include <utility>
 #include <math.h>
+#include <utility>
 
-#include "../src/aggregate.cuh"
-#include "../src/generator.h"
-#include "../src/graph.h"
+#include "../src/graph/generator.h"
+#include "../src/graph/graph.h"
+#include "../src/kernels/aggregate.cuh"
 
-bool feq(float f1, float f2) {
-  return fabs(f1 - f2) < 0.001;
-}
-
+bool feq(float f1, float f2) { return fabs(f1 - f2) < 0.001; }
 
 void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {

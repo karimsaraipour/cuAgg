@@ -1,7 +1,7 @@
 #ifndef SRC__AGGREGATE_CUH
 #define SRC__AGGREGATE_CUH
 
-#include "graph.h"
+#include "../graph/graph.h"
 
 /**
  * Naive aggregate kernel.
@@ -15,20 +15,21 @@ aggregate_naive(const IndexT *const index, const NodeT *const neighbors,
 
 /**
  * Dynamic aggergate kernel.
- * Each thread block is assigned to a node (offset by num thread blocks) and 
+ * Each thread block is assigned to a node (offset by num thread blocks) and
  * given N warps.
  * Each of the N warps will work on one neighbor (offset by N).
- * 
+ *
  * Assumption:
  *  Initialize kernel with threads % warpSize == 0
- * 
- * Usage: 
+ *
+ * Usage:
  *  aggregate_dyn<<<NUMBER OF THREAD BLOCKS, WARPS PER NODE * warpSize>>>(...)
  */
-__global__ void
-aggregate_dyn(const IndexT *const index, const NodeT *const neighbors,
-                const FeatureT *const in_features, FeatureT *const out_features,
-                const NodeT num_nodes, const IndexT num_features);
+__global__ void aggregate_dyn(const IndexT *const index,
+                              const NodeT *const neighbors,
+                              const FeatureT *const in_features,
+                              FeatureT *const out_features,
+                              const NodeT num_nodes, const IndexT num_features);
 
 /**
  * Parallel CPU implementation of aggregate.

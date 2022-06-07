@@ -2,10 +2,10 @@
 #include <fstream>
 #include <iostream>
 
-#include "aggregate.cuh"
-#include "cuda.cuh"
-#include "generator.h"
-#include "graph.h"
+#include "../src/cuda.cuh"
+#include "../src/graph/generator.h"
+#include "../src/graph/graph.h"
+#include "../src/kernels/aggregate.cuh"
 
 constexpr int NUM_FEATURES = 16;
 
