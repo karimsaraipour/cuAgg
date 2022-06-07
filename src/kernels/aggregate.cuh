@@ -1,5 +1,5 @@
-#ifndef SRC__AGGREGATE_CUH
-#define SRC__AGGREGATE_CUH
+#ifndef SRC_KERNELS__AGGREGATE_CUH
+#define SRC_KERNELS__AGGREGATE_CUH
 
 #include "../graph/graph.h"
 

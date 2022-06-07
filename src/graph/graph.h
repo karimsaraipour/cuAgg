@@ -1,5 +1,5 @@
-#ifndef SRC__GRAPH_H
-#define SRC__GRAPH_H
+#ifndef SRC_GRAPH__GRAPH_H
+#define SRC_GRAPH__GRAPH_H
 
 #include <iostream>
 #include <memory>
@@ -44,4 +44,4 @@ std::ostream &operator<<(std::ostream &os, Graph &g);
  */
 std::istream &operator>>(std::istream &is, Graph &g);
 
-#endif // SRC__GRAPH_H
+#endif // SRC_GRAPH__GRAPH_H

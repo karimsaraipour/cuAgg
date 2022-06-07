@@ -1,5 +1,5 @@
-#ifndef SRC__GENERATOR_H
-#define SRC__GENERATOR_H
+#ifndef SRC_GRAPH__GENERATOR_H
+#define SRC_GRAPH__GENERATOR_H
 
 #include "graph.h"
 
@@ -20,4 +20,4 @@ FeatureVec generate_features(NodeT num_nodes, int num_features,
                              FeatureT min = 0, FeatureT max = 1,
                              unsigned seed = 64);
 
-#endif // SRC__GENERATOR_H
+#endif // SRC_GRAPH__GENERATOR_H
