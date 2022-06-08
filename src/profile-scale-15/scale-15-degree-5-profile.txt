@@ -1,0 +1,5 @@
+Kernel execution time for 1 warps: 0.004437 s
+Kernel execution time for 4 warps: 0.001586 s
+Kernel execution time for 8 warps: 0.001123 s
+Kernel execution time for 16 warps: 0.000827 s
+Kernel execution time for 32 warps: 0.000730 s
