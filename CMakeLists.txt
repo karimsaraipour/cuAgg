@@ -4,6 +4,9 @@ project(
   cuAgg
   VERSION 0.1
   LANGUAGES CXX CUDA)
+set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
+
+option(WITH_TESTS "Generate test suite" ON)
 
 # Global Configuration
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp ")
@@ -12,14 +15,22 @@ set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Set default architecture to target CC 7.0 (Tesla V100) and beyond
-if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 70)
 endif()
 
 # Build tests
-enable_testing()
+if (WITH_TESTS)
+  enable_testing()
+endif()
 
-# Libraries
+# Optional: LibPNG
+find_package(PNGwriter)
+
+# External Libraries
+add_subdirectory(deps/yaml-cpp) # yaml-cpp
+
+# Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
   src/graph/partition.cpp)
 add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu)
@@ -28,6 +39,12 @@ set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 # Utility: Graph generation
 add_executable(generate_graph utils/generate_graph.cpp)
 target_link_libraries(generate_graph graph)
+
+# Utility: Draw adjacency matrix
+if (PNGwriter_FOUND)
+  add_executable(visualize_graph utils/visualize_graph.cpp)
+  target_link_libraries(visualize_graph graph PNGwriter::PNGwriter)
+endif()
 
 # Sample code: Generate graphs
 add_executable(example_graph examples/example_graph.cpp)
@@ -61,4 +78,3 @@ add_test(NAME aggregate_naive COMMAND test_aggregate_naive)
 add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
 target_link_libraries(test_aggregate_dyn graph agg)
 add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)
-
