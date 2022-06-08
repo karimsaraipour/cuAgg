@@ -13,7 +13,7 @@ void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {
   FeatureVec node_features(num_features);
 
-  for (NodeT v = 0; v < g->num_nodes; v++) {
+  for (NodeT v = 0; v < g->num_idx_nodes; v++) {
     // Reset node features
     for (IndexT f = 0; f < num_features; f++)
       node_features[f] = in_features[v * num_features + f];
@@ -41,7 +41,7 @@ int main() {
   assert(g != nullptr && "graph is invalid");
 
   // Get CPU oracle (single-threaded)
-  auto features = generate_features(g->num_nodes, TEST_NUM_FEATURES);
+  auto features = generate_features(g->num_idx_nodes, TEST_NUM_FEATURES);
   assert(!features.empty() && "features are empty");
   FeatureVec oracle_features(features.size());
   FeatureVec test_features(features.size());

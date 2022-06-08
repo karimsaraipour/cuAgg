@@ -21,7 +21,7 @@ int main(int argc, char *argv[]) {
   ifs >> *g;
 
   // Generate feature vectors
-  auto features = generate_features(g->num_nodes, NUM_FEATURES);
+  auto features = generate_features(g->num_idx_nodes, NUM_FEATURES);
 
   // Copy data structures to GPU
   IndexT *cu_index;
@@ -41,7 +41,7 @@ int main(int argc, char *argv[]) {
                          cudaMemcpyHostToDevice));
 
   /*dummy_aggregate_kernel<<<1, 32>>>(cu_index, cu_neighbors, cu_features,*/
-  /*g->num_nodes, NUM_FEATURES);*/
+  /*g->num_idx_nodes, NUM_FEATURES);*/
 
   // Free memory
   CUDA_ERRCHK(cudaFree(cu_index));

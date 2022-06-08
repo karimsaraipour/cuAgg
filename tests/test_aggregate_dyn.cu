@@ -14,7 +14,7 @@ void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {
   FeatureVec node_features(num_features);
 
-  for (NodeT v = 0; v < g->num_nodes; v++) {
+  for (NodeT v = 0; v < g->num_idx_nodes; v++) {
     // Reset node features
     for (IndexT f = 0; f < num_features; f++)
       node_features[f] = in_features[v * num_features + f];
@@ -45,7 +45,7 @@ int main() {
   assert(g != nullptr && "graph is invalid");
 
   // Get CPU oracle (single-threaded)
-  auto features = generate_features(g->num_nodes, TEST_NUM_FEATURES);
+  auto features = generate_features(g->num_idx_nodes, TEST_NUM_FEATURES);
   assert(!features.empty() && "features are empty");
   FeatureVec oracle_features(features.size());
 
@@ -72,11 +72,11 @@ int main() {
   CUDA_ERRCHK(cudaMemset(cu_out_features, 0, size_features));
 
   dim3 dim_block(BLOCK_DIM_X, BLOCK_DIM_Y);
-  dim3 dim_grid((g->num_nodes + BLOCK_DIM_X - 1) / BLOCK_DIM_X,
+  dim3 dim_grid((g->num_idx_nodes + BLOCK_DIM_X - 1) / BLOCK_DIM_X,
                 (TEST_NUM_FEATURES + BLOCK_DIM_Y - 1) / BLOCK_DIM_Y);
 
   aggregate_dyn<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
-                                 cu_out_features, g->num_nodes,
+                                 cu_out_features, g->num_idx_nodes,
                                  TEST_NUM_FEATURES);
 
   // Copy results to CPU memory
