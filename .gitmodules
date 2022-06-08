@@ -1,3 +1,6 @@
 [submodule "deps/gapbs"]
 	path = deps/gapbs
 	url = git@github.com:sbeamer/gapbs.git
+[submodule "deps/yaml-cpp"]
+	path = deps/yaml-cpp
+	url = git@github.com:jbeder/yaml-cpp.git
