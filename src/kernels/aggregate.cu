@@ -40,24 +40,47 @@ aggregate_dyn(const IndexT *const index, const NodeT *const neighbors,
   int offset_i = blockDim.x / warpSize; // How many warps in a thread block
   int offset_f = warpSize;
 
-  // iterate over destination nodes 
-  for (NodeT v = start_v; v < num_nodes; v += offset_v) {
+  // // iterate over destination nodes 
+  // for (NodeT v = start_v; v < num_nodes; v += offset_v) {
     
-    // copy of tile of adjancency matrix
-    if (warp_id == 0) // First warp
+  //   // copy of tile of adjancency matrix
+  //   if (warp_id == 0) // First warp
+  //     for (IndexT f = warp_lane; f < num_features; f += offset_f)
+  //       out_features[v * num_features + f] = in_features[v * num_features + f];
+  //   __syncthreads();
+
+  //   // aggregate
+  //   // each warp in thread block handles a neighbor
+  //   // the for loop is strided 
+  //   // threads in a warp handles features in embedding
+  //   for (IndexT i = index[v] + warp_id; i < index[v + 1]; i += offset_i) {
+  //     NodeT u = neighbors[i]; // Edges go from u->v
+  //     for (IndexT f = warp_lane; f < num_features; f += offset_f)
+  //       atomicAdd(&out_features[v * num_features + f], 
+  //                 in_features[u * num_features + f]);
+  //   }
+  // }
+
+  // aggregate_dyn<<<num_blocks, num_threads, shared_mem_size>>>(...<whatever>);
+  extern __shared__ FeatureT shared_out_features[]; // dynamically allocated at run time
+  for (NodeT v = start_v; v < num_nodes; v += offset_v)  { // out_neighbors
+    // copy tile of adjacency matrix
+    if (warp_id == 0) // First warp 
       for (IndexT f = warp_lane; f < num_features; f += offset_f)
         out_features[v * num_features + f] = in_features[v * num_features + f];
     __syncthreads();
 
-    // aggregate
-    // each warp in thread block handles a neighbor
-    // the for loop is strided 
-    // threads in a warp handles features in embedding
-    for (IndexT i = index[v] + warp_id; i < index[v + 1]; i += offset_i) {
-      NodeT u = neighbors[i]; // Edges go from u->v
-      for (IndexT f = warp_lane; f < num_features; f += offset_f)
-        atomicAdd(&out_features[v * num_features + f], 
-                  in_features[u * num_features + f]);
+    for (IndexT f = warp_lane; f < num_features; f += offset_f) { // features
+      // load a tile of the feature vectors
+      shared_out_features[f] = out_features[v * num_features + f];
+      __syncthreads();
+      // aggregate using an atomic add
+      for (IndexT i = index[v] + warp_id; i < index[v + 1]; i += offset_i)
+        atomicAdd(&shared_out_features[f], in_features[neighbors[i] * num_features + f]);
+
+      out_features[v * num_features + f] = shared_out_features[f];
+      __syncthreads();
     }
   }
+
 }
