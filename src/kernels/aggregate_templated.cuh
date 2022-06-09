@@ -122,15 +122,10 @@ aggregate_dyn_rf(const IndexT *const index, const NodeT *const neighbors,
               in_features[u * num_features + ft * feature_tile_size + f];
       }
 
-      // Is this necesary to coalesce atomic update?
-      __syncthreads();
-
       // Write to global memory
       for (IndexT f = warp_lane; f < ft_size; f += offset_f)
         atomicAdd(&out_features[v * num_features + ft * feature_tile_size + f],
                   rf_out_features[f]);
-      // Note: No need to sync here since the each thread will only overwrite
-      // the region they pushed to global memory
     }
   }
 }
