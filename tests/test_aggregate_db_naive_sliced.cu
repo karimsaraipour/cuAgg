@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <assert.h>
 #include <cstdlib>
 #include <math.h>
@@ -65,8 +66,15 @@ int main() {
   NodeT num_tiles1D = (g->num_idx_nodes + TEST_TILE_SIZE - 1) / TEST_TILE_SIZE;
   auto partitions = partition_square_tile(g, TEST_TILE_SIZE);
 
+  // Create subpartition
+  int part_idx_offset = num_tiles1D / 3;
+  int part_idx_cols = num_tiles1D / 4;
+  auto part_slice = PartitionVec(
+      partitions.begin() + part_idx_offset * num_tiles1D,
+      partitions.begin() + (part_idx_offset + part_idx_cols) * num_tiles1D);
+
   aggregate_double_buffer_naive(
-      partitions, num_tiles1D, features, test_features, TEST_NUM_FEATURES,
+      part_slice, part_idx_cols, features, test_features, TEST_NUM_FEATURES,
       TEST_TILE_SIZE,
       [](const IndexT *const index, const NodeT *const neighbors,
          const FeatureT *const in_features, FeatureT *const out_features,
@@ -75,7 +83,12 @@ int main() {
                                          out_features, num_nodes, num_features);
       });
 
-  for (size_t i = 0; i < features.size(); i++)
+  // Check feature vectors in subpartition
+  NodeT idx_start = part_slice.begin()->idx_map.base;
+  auto part_last = part_slice.end() - 1;
+  NodeT idx_end = part_last->idx_map.base + part_last->subgraph->num_idx_nodes;
+  for (size_t i = idx_start * TEST_NUM_FEATURES;
+       i < idx_end * TEST_NUM_FEATURES; i++)
     assert(check(i, test_features[i], oracle_features[i]) &&
            "features don't match");
 

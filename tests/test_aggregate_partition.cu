@@ -65,9 +65,16 @@ int main() {
   NodeT num_tiles1D = (g->num_idx_nodes + TEST_TILE_SIZE - 1) / TEST_TILE_SIZE;
   auto partitions = partition_square_tile(g, TEST_TILE_SIZE);
 
-  aggregate_double_buffer_naive(partitions, num_tiles1D, features,
-                                test_features, TEST_NUM_FEATURES,
-                                TEST_TILE_SIZE, 1);
+  aggregate_double_buffer_naive(
+      partitions, num_tiles1D, features, test_features, TEST_NUM_FEATURES,
+      TEST_TILE_SIZE,
+      [](const IndexT *const index, const NodeT *const neighbors,
+         const FeatureT *const in_features, FeatureT *const out_features,
+         const NodeT num_nodes, const IndexT num_features) -> void {
+        aggregate_dyn<<<num_nodes, 32>>>(index, neighbors, in_features,
+                                         out_features, num_nodes, num_features);
+      },
+      1);
 
   for (size_t i = 0; i < features.size(); i++)
     assert(check(i, test_features[i], oracle_features[i]) &&

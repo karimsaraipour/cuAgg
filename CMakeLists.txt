@@ -10,18 +10,18 @@ option(WITH_TESTS "Generate test suite" ON)
 
 # Global Configuration
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
-#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Set default architecture to target CC 7.0 (Tesla V100) and beyond
-if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 70)
 endif()
 
 # Build tests
-if (WITH_TESTS)
+if(WITH_TESTS)
   enable_testing()
 endif()
 
@@ -33,9 +33,9 @@ add_subdirectory(deps/yaml-cpp) # yaml-cpp
 
 # Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
-  src/graph/partition.cpp)
+                  src/graph/partition.cpp)
 add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu
-  src/kernels/aggregate_db.cu)
+                src/kernels/aggregate_db.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Utility: Graph generation
@@ -47,7 +47,7 @@ add_executable(profile_kernels utils/profile_kernels.cu)
 target_link_libraries(profile_kernels graph)
 
 # Utility: Draw adjacency matrix
-if (PNGwriter_FOUND)
+if(PNGwriter_FOUND)
   add_executable(visualize_graph utils/visualize_graph.cpp)
   target_link_libraries(visualize_graph graph PNGwriter::PNGwriter)
 endif()
@@ -95,3 +95,8 @@ add_executable(test_aggregate_db_naive tests/test_aggregate_db_naive.cu)
 target_link_libraries(test_aggregate_db_naive graph agg)
 add_test(NAME aggregate_db_naive COMMAND test_aggregate_db_naive)
 
+# Test: Check GPU double buffering aggregate (sliced)
+add_executable(test_aggregate_db_naive_sliced
+               tests/test_aggregate_db_naive_sliced.cu)
+target_link_libraries(test_aggregate_db_naive_sliced graph agg)
+add_test(NAME aggregate_db_naive_sliced COMMAND test_aggregate_db_naive_sliced)

@@ -1,15 +1,23 @@
 #include "aggregate.cuh"
 
-#include "../cuda.cuh"
-
 #include <assert.h>
 
+#include "../cuda.cuh"
+#include "../graph/partition.h"
+
 void aggregate_double_buffer_naive(const PartitionVec partitions,
-                                   const NodeT num_tiles1D,
+                                   const NodeT num_idx_tiles,
                                    const FeatureVec &in_features,
                                    FeatureT *const out_features,
                                    const IndexT num_features,
-                                   const NodeT tile_size, const int db_size) {
+                                   const NodeT tile_size, AggregateFunc kernel,
+                                   const int db_size) {
+  for (const auto &part : partitions) {
+    assert(part.idx_map.type == NodeMapping::MappingT::affine);
+    assert(part.idx_map.type == NodeMapping::MappingT::affine);
+  }
+  NodeT num_ngh_tiles = partitions.size() / num_idx_tiles;
+
   // Allocate GPU memory here
   IndexT **cu_index = new IndexT *[db_size];
   NodeT **cu_neighbors = new NodeT *[db_size];
@@ -30,15 +38,15 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
   // Helper function
   auto load_buffer_and_execute = [&](int b, const NodeT idx_tile,
                                      const NodeT ngh_tile) -> void {
-    auto part = partitions[idx_tile * num_tiles1D + ngh_tile];
+    auto part = partitions[idx_tile * num_ngh_tiles + ngh_tile];
 
     // Load input features
     auto size_part_infeats =
         part.subgraph->num_neighbors * num_features * sizeof(FeatureT);
-    CUDA_ERRCHK(cudaMemcpyAsync(
-        cu_in_features[b],
-        &in_features.data()[ngh_tile * tile_size * num_features],
-        size_part_infeats, cudaMemcpyHostToDevice));
+    CUDA_ERRCHK(
+        cudaMemcpyAsync(cu_in_features[b],
+                        &in_features.data()[part.ngh_map.base * num_features],
+                        size_part_infeats, cudaMemcpyHostToDevice));
 
     auto subg = part.subgraph;
     auto size_part_idx = (subg->num_idx_nodes + 1) * sizeof(IndexT);
@@ -53,32 +61,31 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
                                 size_part_nghs, cudaMemcpyHostToDevice));
 
     // Execute kernel
-    aggregate_dyn<<<tile_size, 32>>>(cu_index[b], cu_neighbors[b],
-                                     cu_in_features[b], cu_out_features,
-                                     subg->num_idx_nodes, num_features);
+    kernel(cu_index[b], cu_neighbors[b], cu_in_features[b], cu_out_features,
+           subg->num_idx_nodes, num_features);
   };
 
   // Execute kernel
   int b = 0;
-  for (NodeT idx_tile = 0; idx_tile < num_tiles1D; idx_tile++) {
+  for (NodeT idx_tile = 0; idx_tile < num_idx_tiles; idx_tile++) {
     // Load output features
-    auto part = partitions[idx_tile * num_tiles1D];
+    auto part = partitions[idx_tile * num_ngh_tiles];
     auto size_part_outfeats =
         part.subgraph->num_idx_nodes * num_features * sizeof(FeatureT);
-    CUDA_ERRCHK(cudaMemcpyAsync(
-        cu_out_features, &out_features[idx_tile * tile_size * num_features],
-        size_part_outfeats, cudaMemcpyHostToDevice));
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_out_features,
+                                &out_features[part.idx_map.base * num_features],
+                                size_part_outfeats, cudaMemcpyHostToDevice));
 
     // Execute each input tile
-    for (NodeT ngh_tile = 0; ngh_tile < num_tiles1D; ngh_tile++) {
+    for (NodeT ngh_tile = 0; ngh_tile < num_ngh_tiles; ngh_tile++) {
       load_buffer_and_execute(b, idx_tile, ngh_tile);
       b = (b + 1) % db_size; // Switch buffer
     }
 
     // Unload output features
-    CUDA_ERRCHK(cudaMemcpyAsync(
-        &out_features[idx_tile * tile_size * num_features], cu_out_features,
-        size_part_outfeats, cudaMemcpyDeviceToHost));
+    CUDA_ERRCHK(cudaMemcpyAsync(&out_features[part.idx_map.base * num_features],
+                                cu_out_features, size_part_outfeats,
+                                cudaMemcpyDeviceToHost));
   }
 
   // Free memory

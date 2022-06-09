@@ -1,8 +1,14 @@
 #ifndef SRC_KERNELS__AGGREGATE_CUH
 #define SRC_KERNELS__AGGREGATE_CUH
 
+#include <functional>
+
 #include "../graph/graph.h"
 #include "../graph/partition.h"
+
+using AggregateFunc = std::function<void(
+    const IndexT *const, const NodeT *const, const FeatureT *const,
+    FeatureT *const, const NodeT, const IndexT)>;
 
 /**
  * Naive aggregate kernel.
@@ -60,11 +66,15 @@ void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
 
 /**
  * Double buffer naive partitioning
+ * num_idx_tiles indicates how many index tiles are currently in the partition
  * Use db_size=1 for no double buffering
  */
-void aggregate_double_buffer_naive(
-    const PartitionVec partitions, const NodeT num_tiles1D,
-    const FeatureVec &in_features, FeatureT *const out_features,
-    const IndexT num_features, const NodeT tile_size, const int db_size = 2);
+void aggregate_double_buffer_naive(const PartitionVec partitions,
+                                   const NodeT num_idx_tiles,
+                                   const FeatureVec &in_features,
+                                   FeatureT *const out_features,
+                                   const IndexT num_features,
+                                   const NodeT tile_size, AggregateFunc kernel,
+                                   const int db_size = 2);
 
 #endif // SRC__AGGREGATE_CUH
