@@ -50,12 +50,11 @@ __global__ void aggregate_dyn(const IndexT *const index,
  * Usage:
  *  aggregate_dyn<<<NUMBER OF THREAD BLOCKS, WARPS PER NODE * warpSize>>>(...)
  */
-__global__ void aggregate_dyn_sm(const IndexT *const index,
-                                 const NodeT *const neighbors,
-                                 const FeatureT *const in_features,
-                                 FeatureT *const out_features,
-                                 const NodeT num_nodes,
-                                 const IndexT num_features);
+__global__ void
+aggregate_dyn_sm(const IndexT *const index, const NodeT *const neighbors,
+                 const FeatureT *const in_features,
+                 FeatureT *const out_features, const NodeT num_nodes,
+                 const IndexT num_features, const IndexT feature_tile_size);
 
 /**
  * Parallel CPU implementation of aggregate.

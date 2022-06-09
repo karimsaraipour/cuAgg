@@ -34,7 +34,7 @@ add_subdirectory(deps/yaml-cpp) # yaml-cpp
 # Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
                   src/graph/partition.cpp)
-add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu
+add_library(agg src/kernels/aggregate_cpu.cu src/kernels/aggregate.cu
                 src/kernels/aggregate_db.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
@@ -84,6 +84,16 @@ add_test(NAME aggregate_naive COMMAND test_aggregate_naive)
 add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
 target_link_libraries(test_aggregate_dyn graph agg)
 add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)
+
+# Test: Check GPU dyn aggregate shared memory
+add_executable(test_aggregate_dyn_sm tests/test_aggregate_dyn_sm.cu)
+target_link_libraries(test_aggregate_dyn_sm graph agg)
+add_test(NAME aggregate_dyn_sm COMMAND test_aggregate_dyn_sm)
+
+# Test: Check GPU dyn aggregate register file
+add_executable(test_aggregate_dyn_rf tests/test_aggregate_dyn_rf.cu)
+target_link_libraries(test_aggregate_dyn_rf graph agg)
+add_test(NAME aggregate_dyn_rf COMMAND test_aggregate_dyn_rf)
 
 # Test: Check GPU partitioned aggregate
 add_executable(test_aggregate_partition tests/test_aggregate_partition.cu)

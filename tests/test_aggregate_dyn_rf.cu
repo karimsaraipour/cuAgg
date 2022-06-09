@@ -6,14 +6,15 @@
 #include "../src/cuda.cuh"
 #include "../src/graph/generator.h"
 #include "../src/graph/graph.h"
-#include "../src/kernels/aggregate.cuh"
+#include "../src/kernels/aggregate_templated.cuh"
 
 bool check(size_t i, float test, float oracle) {
-  bool is_correct = fabs(test - oracle) < 0.001;
+  bool is_correct = fabs(test - oracle) < 0.01;
   if (!is_correct) {
     std::cerr << "Test failed at index " << i << std::endl;
     std::cerr << "CPU: " << test << std::endl;
     std::cerr << "GPU: " << oracle << std::endl;
+    std::cerr << "Delta: " << fabs(test - oracle) << std::endl;
   }
   return is_correct;
 }
@@ -76,9 +77,9 @@ int main() {
                          cudaMemcpyHostToDevice));
   CUDA_ERRCHK(cudaMemset(cu_out_features, 0, size_features));
 
-  aggregate_dyn<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
-                                 cu_out_features, g->num_idx_nodes,
-                                 TEST_NUM_FEATURES);
+  auto kernel = aggregate_dyn_rf<TEST_NUM_FEATURES>;
+  kernel<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
+                          cu_out_features, g->num_idx_nodes, TEST_NUM_FEATURES);
 
   // Copy results to CPU memory
   FeatureT *test_features = new FeatureT[features.size()];
