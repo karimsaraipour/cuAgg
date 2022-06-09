@@ -76,7 +76,7 @@ int main() {
                          cudaMemcpyHostToDevice));
   CUDA_ERRCHK(cudaMemset(cu_out_features, 0, size_features));
 
-  auto kernel = aggregate_dyn_sm<TEST_NUM_FEATURES>;
+  auto kernel = aggregate_dyn_sm_rf<TEST_NUM_FEATURES>;
   kernel<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
                           cu_out_features, g->num_idx_nodes, TEST_NUM_FEATURES);
 
