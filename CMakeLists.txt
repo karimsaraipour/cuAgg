@@ -85,7 +85,13 @@ add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
 target_link_libraries(test_aggregate_dyn graph agg)
 add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)
 
-# Test: Check GPU double buffering naive aggregate
+# Test: Check GPU partitioned aggregate
+add_executable(test_aggregate_partition tests/test_aggregate_partition.cu)
+target_link_libraries(test_aggregate_partition graph agg)
+add_test(NAME aggregate_partition COMMAND test_aggregate_partition)
+
+# Test: Check GPU double buffering aggregate
 add_executable(test_aggregate_db_naive tests/test_aggregate_db_naive.cu)
 target_link_libraries(test_aggregate_db_naive graph agg)
 add_test(NAME aggregate_db_naive COMMAND test_aggregate_db_naive)
+

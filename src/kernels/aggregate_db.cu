@@ -9,19 +9,18 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
                                    const FeatureVec &in_features,
                                    FeatureT *const out_features,
                                    const IndexT num_features,
-                                   const NodeT tile_size) {
+                                   const NodeT tile_size, const int db_size) {
   // Allocate GPU memory here
-  constexpr int db = 2;
-  IndexT *cu_index[db];
-  NodeT *cu_neighbors[db];
-  FeatureT *cu_in_features[db];
+  IndexT **cu_index = new IndexT *[db_size];
+  NodeT **cu_neighbors = new NodeT *[db_size];
+  FeatureT **cu_in_features = new FeatureT *[db_size];
   FeatureT *cu_out_features;
 
   size_t size_index = (tile_size + 1) * sizeof(IndexT);
   size_t size_neighbors = tile_size * tile_size * sizeof(NodeT);
   size_t size_features = tile_size * num_features * sizeof(FeatureT);
 
-  for (int i = 0; i < db; i++) {
+  for (int i = 0; i < db_size; i++) {
     CUDA_ERRCHK(cudaMalloc((void **)&cu_index[i], size_index));
     CUDA_ERRCHK(cudaMalloc((void **)&cu_neighbors[i], size_neighbors));
     CUDA_ERRCHK(cudaMalloc((void **)&cu_in_features[i], size_features));
@@ -73,7 +72,7 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
     // Execute each input tile
     for (NodeT ngh_tile = 0; ngh_tile < num_tiles1D; ngh_tile++) {
       load_buffer_and_execute(b, idx_tile, ngh_tile);
-      b = (b + 1) % db; // Switch buffer
+      b = (b + 1) % db_size; // Switch buffer
     }
 
     // Unload output features
@@ -82,10 +81,15 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
         size_part_outfeats, cudaMemcpyDeviceToHost));
   }
 
-  for (int i = 0; i < db; i++) {
+  // Free memory
+  for (int i = 0; i < db_size; i++) {
     CUDA_ERRCHK(cudaFree(cu_index[i]));
     CUDA_ERRCHK(cudaFree(cu_neighbors[i]));
     CUDA_ERRCHK(cudaFree(cu_in_features[i]));
   }
   CUDA_ERRCHK(cudaFree(cu_out_features));
+
+  delete[] cu_index;
+  delete[] cu_neighbors;
+  delete[] cu_in_features;
 }

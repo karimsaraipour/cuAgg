@@ -60,12 +60,11 @@ void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
 
 /**
  * Double buffer naive partitioning
+ * Use db_size=1 for no double buffering
  */
-void aggregate_double_buffer_naive(const PartitionVec partitions,
-                                   const NodeT num_tiles1D,
-                                   const FeatureVec &in_features,
-                                   FeatureT *const out_features,
-                                   const IndexT num_features,
-                                   const NodeT tile_size);
+void aggregate_double_buffer_naive(
+    const PartitionVec partitions, const NodeT num_tiles1D,
+    const FeatureVec &in_features, FeatureT *const out_features,
+    const IndexT num_features, const NodeT tile_size, const int db_size = 2);
 
 #endif // SRC__AGGREGATE_CUH

@@ -100,12 +100,6 @@ __global__ void aggregate_dyn_sm(const IndexT *const index,
   extern __shared__ FeatureT
       shared_out_features[]; // dynamically allocated at run time
   for (NodeT v = start_v; v < num_nodes; v += offset_v) { // out_neighbors
-    // copy tile of adjacency matrix
-    if (warp_id == 0) // First warp
-      for (IndexT f = warp_lane; f < num_features; f += offset_f)
-        out_features[v * num_features + f] = in_features[v * num_features + f];
-    __syncthreads();
-
     for (IndexT f = warp_lane; f < num_features; f += offset_f) { // features
       // load a tile of the feature vectors
       shared_out_features[f] = out_features[v * num_features + f];
