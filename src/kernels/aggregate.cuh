@@ -2,6 +2,7 @@
 #define SRC_KERNELS__AGGREGATE_CUH
 
 #include "../graph/graph.h"
+#include "../graph/partition.h"
 
 /**
  * Naive aggregate kernel.
@@ -37,5 +38,15 @@ __global__ void aggregate_dyn(const IndexT *const index,
  */
 void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
                    FeatureVec &out_features, IndexT num_features);
+
+/**
+ * Double buffer naive partitioning
+ */
+void aggregate_double_buffer_naive(const PartitionVec partitions,
+                                   const NodeT num_tiles1D,
+                                   const FeatureVec &in_features,
+                                   FeatureT *const out_features,
+                                   const IndexT num_features,
+                                   const NodeT tile_size);
 
 #endif // SRC__AGGREGATE_CUH

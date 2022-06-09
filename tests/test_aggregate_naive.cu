@@ -8,7 +8,15 @@
 #include "../src/graph/graph.h"
 #include "../src/kernels/aggregate.cuh"
 
-bool feq(float f1, float f2) { return fabs(f1 - f2) < 0.001; }
+bool check(size_t i, float test, float oracle) {
+  bool is_correct = fabs(test - oracle) < 0.001;
+  if (!is_correct) {
+    std::cerr << "Test failed at index " << i << std::endl;
+    std::cerr << "CPU: " << test << std::endl;
+    std::cerr << "GPU: " << oracle << std::endl;
+  }
+  return is_correct;
+}
 
 void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
                           FeatureVec &out_features, int num_features) {
@@ -17,7 +25,7 @@ void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
   for (NodeT v = 0; v < g->num_idx_nodes; v++) {
     // Reset node features
     for (IndexT f = 0; f < num_features; f++)
-      node_features[f] = in_features[v * num_features + f];
+      node_features[f] = 0;
 
     // Aggregate features
     for (IndexT i = g->index[v]; i < g->index[v + 1]; i++) {
@@ -85,7 +93,8 @@ int main() {
                          cudaMemcpyDeviceToHost));
 
   for (size_t i = 0; i < features.size(); i++)
-    assert(feq(test_features[i], oracle_features[i]) && "features don't match");
+    assert(check(i, test_features[i], oracle_features[i]) &&
+           "features don't match");
 
   delete[] test_features;
 

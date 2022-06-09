@@ -9,7 +9,8 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 option(WITH_TESTS "Generate test suite" ON)
 
 # Global Configuration
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
@@ -33,12 +34,17 @@ add_subdirectory(deps/yaml-cpp) # yaml-cpp
 # Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
   src/graph/partition.cpp)
-add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu)
+add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu
+  src/kernels/aggregate_db.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Utility: Graph generation
 add_executable(generate_graph utils/generate_graph.cpp)
 target_link_libraries(generate_graph graph)
+
+# Utility: Kernel profiling
+add_executable(profile_kernels utils/profile_kernels.cu)
+target_link_libraries(profile_kernels graph)
 
 # Utility: Draw adjacency matrix
 if (PNGwriter_FOUND)
@@ -78,3 +84,8 @@ add_test(NAME aggregate_naive COMMAND test_aggregate_naive)
 add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
 target_link_libraries(test_aggregate_dyn graph agg)
 add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)
+
+# Test: Check GPU double buffering naive aggregate
+add_executable(test_aggregate_db_naive tests/test_aggregate_db_naive.cu)
+target_link_libraries(test_aggregate_db_naive graph agg)
+add_test(NAME aggregate_db_naive COMMAND test_aggregate_db_naive)
