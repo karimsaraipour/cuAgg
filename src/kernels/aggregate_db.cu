@@ -6,13 +6,11 @@
 #include "../cuda.cuh"
 #include "../graph/partition.h"
 
-void aggregate_double_buffer_naive(const PartitionVec partitions,
-                                   const NodeT num_idx_tiles,
-                                   const FeatureVec &in_features,
-                                   FeatureT *const out_features,
-                                   const IndexT num_features,
-                                   const NodeT tile_size, AggregateFunc kernel,
-                                   const int db_size) {
+void aggregate_double_buffer_naive(
+    const PartitionVec partitions, const NodeT num_idx_tiles,
+    const FeatureVec &in_features, FeatureT *const out_features,
+    const IndexT num_features, const NodeT tile_size, AggregateFunc kernel,
+    const int db_size, const size_t neighbors_size) {
   for (const auto &part : partitions) {
     assert(part.idx_map.type == NodeMapping::MappingT::affine);
     assert(part.idx_map.type == NodeMapping::MappingT::affine);
@@ -26,8 +24,16 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
   FeatureT *cu_out_features;
 
   size_t size_index = (tile_size + 1) * sizeof(IndexT);
-  size_t size_neighbors = tile_size * tile_size * sizeof(NodeT);
+  size_t size_neighbors =
+      ((neighbors_size == 0) ? tile_size * tile_size : neighbors_size) *
+      sizeof(NodeT);
   size_t size_features = tile_size * num_features * sizeof(FeatureT);
+  std::cout << size_index << std::endl
+            << size_neighbors << std::endl
+            << size_features << std::endl
+            << (size_index + size_neighbors + size_features) * db_size +
+                   size_features
+            << std::endl;
 
   for (int i = 0; i < db_size; i++) {
     CUDA_ERRCHK(cudaMalloc((void **)&cu_index[i], size_index));
@@ -109,7 +115,8 @@ NodeT get_square_tile_size(const IndexT num_features, const int db_size,
   cudaDeviceProp prop;
   CUDA_ERRCHK(cudaGetDeviceProperties(&prop, 0));
 
-  size_t total_mem = prop.totalGlobalMem;
+  size_t total_mem = prop.totalGlobalMem * 0.9f;
+  std::cout << total_mem << std::endl;
 
   // Assumption that neighbors array is not sparse will hurt the general
   // case!
@@ -142,8 +149,10 @@ NodeT get_square_tile_size(const IndexT num_features, const int db_size,
   // Could still be possible that the final tile size is one too large
   if (memory_used(start) > total_mem) {
     assert(memory_used(start - 1) <= total_mem);
+    std::cout << memory_used(start - 1) << std::endl;
     return start - 1;
   }
 
+  std::cout << memory_used(start - 1) << std::endl;
   return start;
 }

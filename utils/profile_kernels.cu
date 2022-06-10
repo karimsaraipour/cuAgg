@@ -1,12 +1,16 @@
 #include <algorithm>
+#include <assert.h>
 #include <cstdlib>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 
+#include "../src/cuda.cuh"
+#include "../src/graph/generator.h"
 #include "../src/graph/graph.h"
 #include "../src/graph/partition.h"
 #include "../src/kernels/aggregate.cuh"
+#include "../src/kernels/aggregate_templated.cuh"
 
 int main(int argc, char *argv[]) {
   if (argc < 3 && argc > 5) {
@@ -35,7 +39,6 @@ int main(int argc, char *argv[]) {
 
   size_t w_tile_size = tile_size;
   size_t valid_ngh_size = w_tile_size * w_tile_size * sparsity;
-  std::cout << valid_ngh_size << std::endl;
   NodeT failed_tiles = 0;
   for (auto &part : partitions) {
     IndexT num_edges = part.subgraph->index[part.subgraph->num_idx_nodes];
@@ -46,6 +49,7 @@ int main(int argc, char *argv[]) {
       failed_tiles++;
   }
 
+  // Print stats
   auto num_nodes = g->num_idx_nodes;
   auto num_edges = g->index[g->num_idx_nodes];
   std::cout << "Graph" << std::endl
@@ -57,6 +61,49 @@ int main(int argc, char *argv[]) {
             << "  Tile size: " << tile_size << std::endl
             << "  Total tiles: " << partitions.size() << std::endl
             << "  Failed tiles: " << failed_tiles << std::endl;
+
+  // Generate profile
+  auto features = generate_features(g->num_idx_nodes, num_features);
+  assert(!features.empty() && "features are empty");
+  std::cout << "Features created" << std::endl;
+
+  FeatureT *dummy_features = new FeatureT[features.size()];
+  NodeT num_tiles1D = (g->num_idx_nodes + tile_size - 1) / tile_size;
+
+  // Generate timing events
+  cudaEvent_t *starts = new cudaEvent_t[partitions.size()];
+  cudaEvent_t *stops = new cudaEvent_t[partitions.size()];
+  for (size_t i = 0; i < partitions.size(); i++) {
+    CUDA_ERRCHK(cudaEventCreate(&starts[i]));
+    CUDA_ERRCHK(cudaEventCreate(&stops[i]));
+  }
+  IndexT e = 0;
+
+  // Run kernel
+  aggregate_double_buffer_naive(
+      partitions, num_tiles1D, features, dummy_features, num_features,
+      tile_size,
+      [&starts, &stops,
+       &e](const IndexT *const index, const NodeT *const neighbors,
+           const FeatureT *const in_features, FeatureT *const out_features,
+           const NodeT num_nodes, const IndexT num_features) -> void {
+        cudaEventRecord(starts[e]);
+        aggregate_dyn<<<num_nodes, 32>>>(index, neighbors, in_features,
+                                         out_features, num_nodes, num_features);
+        cudaEventRecord(stops[e]);
+        e++;
+      },
+      db_size, valid_ngh_size);
+
+  // Report times
+  for (size_t i = 0; i < partitions.size(); i++) {
+    CUDA_ERRCHK(cudaEventSynchronize(stops[i]));
+    float elapsed;
+    CUDA_ERRCHK(cudaEventElapsedTime(&elapsed, starts[i], stops[i]));
+    std::cout << "  Time: " << elapsed << " ms" << std::endl;
+  }
+
+  delete[] dummy_features;
 
   return EXIT_SUCCESS;
 }

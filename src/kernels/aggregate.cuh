@@ -49,13 +49,11 @@ void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
  * num_idx_tiles indicates how many index tiles are currently in the partition
  * Use db_size=1 for no double buffering
  */
-void aggregate_double_buffer_naive(const PartitionVec partitions,
-                                   const NodeT num_idx_tiles,
-                                   const FeatureVec &in_features,
-                                   FeatureT *const out_features,
-                                   const IndexT num_features,
-                                   const NodeT tile_size, AggregateFunc kernel,
-                                   const int db_size = 2);
+void aggregate_double_buffer_naive(
+    const PartitionVec partitions, const NodeT num_idx_tiles,
+    const FeatureVec &in_features, FeatureT *const out_features,
+    const IndexT num_features, const NodeT tile_size, AggregateFunc kernel,
+    const int db_size = 2, const size_t neighbors_size = 0);
 
 NodeT get_square_tile_size(const IndexT num_features, const int db_size = 2,
                            const float sparsity = 0.2);
