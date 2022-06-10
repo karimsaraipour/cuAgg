@@ -29,8 +29,7 @@ endif()
 find_package(PNGwriter QUIET)
 
 # External Libraries
-
-# add_subdirectory(deps/yaml-cpp) # yaml-cpp
+add_subdirectory(deps/yaml-cpp) # yaml-cpp
 
 # Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
@@ -50,7 +49,7 @@ target_link_libraries(profile_kernels graph agg)
 
 # Utility: Kernel profiling (sparsity)
 add_executable(profile_kernels_sparsity utils/profile_kernels_sparsity.cu)
-target_link_libraries(profile_kernels_sparsity graph agg)
+target_link_libraries(profile_kernels_sparsity graph agg yaml-cpp)
 
 # Utility: Draw adjacency matrix
 if(PNGwriter_FOUND)

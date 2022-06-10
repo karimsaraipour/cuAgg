@@ -24,8 +24,9 @@ void aggregate_double_buffer_naive(
   FeatureT *cu_out_features;
 
   size_t size_index = (tile_size + 1) * sizeof(IndexT);
+  size_t w_tile_size = tile_size;
   size_t size_neighbors =
-      ((neighbors_size == 0) ? tile_size * tile_size : neighbors_size) *
+      ((neighbors_size == 0) ? w_tile_size * w_tile_size : neighbors_size) *
       sizeof(NodeT);
   size_t size_features = tile_size * num_features * sizeof(FeatureT);
 
@@ -35,6 +36,7 @@ void aggregate_double_buffer_naive(
     CUDA_ERRCHK(cudaMalloc((void **)&cu_in_features[i], size_features));
   }
   CUDA_ERRCHK(cudaMalloc((void **)&cu_out_features, size_features));
+  CUDA_ERRCHK(cudaMemset(cu_out_features, 0, size_features));
 
   // Helper function
   auto load_buffer_and_execute = [&](int b, const NodeT idx_tile,
