@@ -3,16 +3,28 @@
 
 #include <iostream>
 #include <memory>
+#include <utility>
 #include <vector>
 
 struct Graph;
 using NodeT = int;
 using IndexT = int;
 using FeatureT = float;
-using NodeVec = std::vector<NodeT>;
-using IndexVec = std::vector<IndexT>;
-using FeatureVec = std::vector<FeatureT>;
+using NodeVec = std::shared_ptr<NodeT>;
+using IndexVec = std::shared_ptr<IndexT>;
+using FeatureVec = std::shared_ptr<FeatureT>;
 using GraphPtr = std::shared_ptr<Graph>;
+
+template <typename T> struct Vector {
+  using VecT = std::shared_ptr<T>;
+  static VecT create(const size_t size) {
+    return VecT(new T[size], std::default_delete<T[]>());
+  }
+};
+
+using NodeVector = Vector<NodeT>;
+using IndexVector = Vector<IndexT>;
+using FeatureVector = Vector<FeatureT>;
 
 /**
  * Basic CSR structure for graphs.
@@ -27,8 +39,8 @@ using GraphPtr = std::shared_ptr<Graph>;
  * possible for a matrix to not be square.
  */
 struct Graph {
-  IndexVec index;    // size = N + 1
-  NodeVec neighbors; // size = M
+  IndexVec index;
+  NodeVec neighbors;
 
   // This is essentially matrix rows & matrix columns respectively
   NodeT num_idx_nodes; // number of nodes indexd (i.e., index size)
@@ -36,7 +48,7 @@ struct Graph {
 
   enum class DirectionT { push, pull } direction;
 
-  Graph() : Graph(IndexVec(), NodeVec(), 0, DirectionT::pull) {}
+  Graph() : Graph(nullptr, nullptr, 0, DirectionT::pull) {}
   Graph(IndexVec index_, NodeVec neighbors_, NodeT num_nodes_,
         DirectionT direction_ = DirectionT::pull)
       : index(index_), neighbors(neighbors_), num_idx_nodes(num_nodes_),

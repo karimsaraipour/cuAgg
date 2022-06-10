@@ -5,7 +5,7 @@
 
 PartitionVec partition_square_tile(const GraphPtr g, const NodeT tile_size) {
   assert(g->direction == Graph::DirectionT::pull); // assume pull graph; can be
-                                                   // extended to push easily
+  // extended to push easily
   assert(g->num_idx_nodes ==
          g->num_neighbors); // assume square adj matrix first
 
@@ -31,10 +31,10 @@ PartitionVec partition_square_tile(const GraphPtr g, const NodeT tile_size) {
       part.subgraph->num_idx_nodes = num_idx_nodes;
       part.subgraph->num_neighbors = num_ngh_nodes;
 
-      // Set arrays
-      part.subgraph->index.resize(1);
-      part.subgraph->index[0] = 0;
-      part.subgraph->neighbors.resize(0);
+      // Generate index array
+      part.subgraph->index = IndexVector::create(num_idx_nodes + 1);
+      for (IndexT idx = 0; idx < num_idx_nodes + 1; idx++)
+        part.subgraph->index.get()[idx] = 0;
 
       // Set mapping
       part.idx_map = NodeMapping::new_affine(idx_start);
@@ -42,25 +42,55 @@ PartitionVec partition_square_tile(const GraphPtr g, const NodeT tile_size) {
     }
   }
 
-  // Assign edges to the correct partition
-  for (NodeT v = 0; v < g->num_idx_nodes; v++) {
+  // Dry run to determine the index array
+#pragma omp parallel for
+  for (NodeT idx = 0; idx < g->num_idx_nodes; idx++) {
+    NodeT idx_tile = idx / tile_size;
+    NodeT pidx = idx - idx_tile * tile_size;
+
+    for (IndexT i = g->index.get()[idx]; i < g->index.get()[idx + 1]; i++) {
+      NodeT ngh = g->neighbors.get()[i];
+      NodeT ngh_tile = ngh / tile_size;
+
+      auto &subg = partitions[idx_tile * num_tiles1D + ngh_tile].subgraph;
+
+      // Update index array
+#pragma omp atomic
+      subg->index.get()[pidx + 1]++;
+    }
+  }
+
+  // Prefix sum
+#pragma omp parallel for
+  for (auto i = 0; i < partitions.size(); i++) {
+    auto subg = partitions[i].subgraph;
+    for (NodeT i = 0; i < subg->num_idx_nodes; i++)
+      subg->index.get()[i + 1] += subg->index.get()[i];
+  }
+
+  // Generate edge array
+  for (auto &part : partitions)
+    part.subgraph->neighbors = NodeVector::create(
+        part.subgraph->index.get()[part.subgraph->num_idx_nodes]);
+
+    // Assign edges to the correct partition
+#pragma omp parallel for
+  for (NodeT idx = 0; idx < g->num_idx_nodes; idx++) {
     // Get appropriate src tile
-    NodeT idx_tile = v / tile_size;
+    NodeT idx_tile = idx / tile_size;
+    NodeT pidx = idx - idx_tile * tile_size;
 
     // Push neighbors to appropriate neighbor list
-    for (IndexT i = g->index[v]; i < g->index[v + 1]; i++) {
-      NodeT u = g->neighbors[i];
-      NodeT ngh_tile = u / tile_size;
+    std::vector<IndexT> offsets(num_tiles1D, 0);
+    for (IndexT i = g->index.get()[idx]; i < g->index.get()[idx + 1]; i++) {
+      NodeT ngh = g->neighbors.get()[i];
+      NodeT ngh_tile = ngh / tile_size;
 
-      auto &part = partitions[idx_tile * num_tiles1D + ngh_tile];
-      NodeT pu = u - ngh_tile * tile_size;
-      part.subgraph->neighbors.push_back(pu);
-    }
+      auto &subg = partitions[idx_tile * num_tiles1D + ngh_tile].subgraph;
+      NodeT pngh = ngh - ngh_tile * tile_size;
 
-    // Update all subgraph indices this idx_tile touches
-    for (NodeT ngh_tile = 0; ngh_tile < num_tiles1D; ngh_tile++) {
-      auto &part = partitions[idx_tile * num_tiles1D + ngh_tile];
-      part.subgraph->index.push_back(part.subgraph->neighbors.size());
+      subg->neighbors.get()[subg->index.get()[pidx] + offsets[ngh_tile]] = pngh;
+      offsets[ngh_tile]++;
     }
   }
 

@@ -8,7 +8,6 @@
 int main(int argc, char *argv[]) {
   constexpr int TEST_SCALE = 14;
   constexpr int TEST_DEGREE = 10;
-  constexpr int NUM_FEATURES = 16;
 
   // Generate graph
   auto g = generate_krongraph(TEST_SCALE, TEST_DEGREE);
@@ -29,11 +28,11 @@ int main(int argc, char *argv[]) {
 
   // Make sure index arrays match
   for (NodeT idx = 0; idx < g->num_idx_nodes + 1; idx++)
-    assert(g->index[idx] == g_read->index[idx]);
+    assert(g->index.get()[idx] == g_read->index.get()[idx]);
 
   // Make sure neighbor arrays match
-  for (IndexT idx = 0; idx < g->index[g->num_idx_nodes]; idx++)
-    assert(g->neighbors[idx] == g_read->neighbors[idx]);
+  for (IndexT idx = 0; idx < g->index.get()[g->num_idx_nodes]; idx++)
+    assert(g->neighbors.get()[idx] == g_read->neighbors.get()[idx]);
 
   return EXIT_SUCCESS;
 }

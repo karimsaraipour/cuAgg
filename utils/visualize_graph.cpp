@@ -45,8 +45,8 @@ int main(int argc, char *argv[]) {
     // Draw edges
 #pragma omp parallel for
     for (NodeT v = 0; v < g->num_idx_nodes; v++) {
-      for (IndexT i = g->index[v]; i < g->index[v + 1]; i++) {
-        NodeT u = g->neighbors[i];
+      for (IndexT i = g->index.get()[v]; i < g->index.get()[v + 1]; i++) {
+        NodeT u = g->neighbors.get()[i];
         SET_PIXEL(img, u, v, color_edge);
       }
     }

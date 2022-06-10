@@ -8,7 +8,7 @@
 
 void aggregate_double_buffer_naive(
     const PartitionVec partitions, const NodeT num_idx_tiles,
-    const FeatureVec &in_features, FeatureT *const out_features,
+    const FeatureVec &in_features, FeatureVec &out_features,
     const IndexT num_features, const NodeT tile_size, AggregateFunc kernel,
     const int db_size, const size_t neighbors_size) {
   for (const auto &part : partitions) {
@@ -28,12 +28,6 @@ void aggregate_double_buffer_naive(
       ((neighbors_size == 0) ? tile_size * tile_size : neighbors_size) *
       sizeof(NodeT);
   size_t size_features = tile_size * num_features * sizeof(FeatureT);
-  std::cout << size_index << std::endl
-            << size_neighbors << std::endl
-            << size_features << std::endl
-            << (size_index + size_neighbors + size_features) * db_size +
-                   size_features
-            << std::endl;
 
   for (int i = 0; i < db_size; i++) {
     CUDA_ERRCHK(cudaMalloc((void **)&cu_index[i], size_index));
@@ -46,25 +40,28 @@ void aggregate_double_buffer_naive(
   auto load_buffer_and_execute = [&](int b, const NodeT idx_tile,
                                      const NodeT ngh_tile) -> void {
     auto part = partitions[idx_tile * num_ngh_tiles + ngh_tile];
+    auto subg = part.subgraph;
+    auto size_part_idx = (subg->num_idx_nodes + 1) * sizeof(IndexT);
+    auto size_part_nghs =
+        subg->index.get()[subg->num_idx_nodes] * sizeof(NodeT);
+
+    // Skip empty tiles
+    if (size_part_nghs == 0)
+      return;
 
     // Load input features
     auto size_part_infeats =
         part.subgraph->num_neighbors * num_features * sizeof(FeatureT);
-    CUDA_ERRCHK(
-        cudaMemcpyAsync(cu_in_features[b],
-                        &in_features.data()[part.ngh_map.base * num_features],
-                        size_part_infeats, cudaMemcpyHostToDevice));
-
-    auto subg = part.subgraph;
-    auto size_part_idx = (subg->num_idx_nodes + 1) * sizeof(IndexT);
-    auto size_part_nghs = subg->index[subg->num_idx_nodes] * sizeof(NodeT);
+    CUDA_ERRCHK(cudaMemcpyAsync(
+        cu_in_features[b], &in_features.get()[part.ngh_map.base * num_features],
+        size_part_infeats, cudaMemcpyHostToDevice));
 
     // Load index
-    CUDA_ERRCHK(cudaMemcpyAsync(cu_index[b], subg->index.data(), size_part_idx,
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_index[b], subg->index.get(), size_part_idx,
                                 cudaMemcpyHostToDevice));
 
     // Load neighbors
-    CUDA_ERRCHK(cudaMemcpyAsync(cu_neighbors[b], subg->neighbors.data(),
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_neighbors[b], subg->neighbors.get(),
                                 size_part_nghs, cudaMemcpyHostToDevice));
 
     // Execute kernel
@@ -79,9 +76,9 @@ void aggregate_double_buffer_naive(
     auto part = partitions[idx_tile * num_ngh_tiles];
     auto size_part_outfeats =
         part.subgraph->num_idx_nodes * num_features * sizeof(FeatureT);
-    CUDA_ERRCHK(cudaMemcpyAsync(cu_out_features,
-                                &out_features[part.idx_map.base * num_features],
-                                size_part_outfeats, cudaMemcpyHostToDevice));
+    CUDA_ERRCHK(cudaMemcpyAsync(
+        cu_out_features, &out_features.get()[part.idx_map.base * num_features],
+        size_part_outfeats, cudaMemcpyHostToDevice));
 
     // Execute each input tile
     for (NodeT ngh_tile = 0; ngh_tile < num_ngh_tiles; ngh_tile++) {
@@ -90,9 +87,9 @@ void aggregate_double_buffer_naive(
     }
 
     // Unload output features
-    CUDA_ERRCHK(cudaMemcpyAsync(&out_features[part.idx_map.base * num_features],
-                                cu_out_features, size_part_outfeats,
-                                cudaMemcpyDeviceToHost));
+    CUDA_ERRCHK(cudaMemcpyAsync(
+        &out_features.get()[part.idx_map.base * num_features], cu_out_features,
+        size_part_outfeats, cudaMemcpyDeviceToHost));
   }
 
   // Free memory
@@ -116,7 +113,6 @@ NodeT get_square_tile_size(const IndexT num_features, const int db_size,
   CUDA_ERRCHK(cudaGetDeviceProperties(&prop, 0));
 
   size_t total_mem = prop.totalGlobalMem * 0.9f;
-  std::cout << total_mem << std::endl;
 
   // Assumption that neighbors array is not sparse will hurt the general
   // case!
@@ -149,10 +145,8 @@ NodeT get_square_tile_size(const IndexT num_features, const int db_size,
   // Could still be possible that the final tile size is one too large
   if (memory_used(start) > total_mem) {
     assert(memory_used(start - 1) <= total_mem);
-    std::cout << memory_used(start - 1) << std::endl;
     return start - 1;
   }
 
-  std::cout << memory_used(start - 1) << std::endl;
   return start;
 }

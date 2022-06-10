@@ -23,21 +23,23 @@ int main(int argc, char *argv[]) {
   // Generate feature vectors
   auto features = generate_features(g->num_idx_nodes, NUM_FEATURES);
 
+  size_t feature_count = g->num_idx_nodes * NUM_FEATURES;
+
   // Copy data structures to GPU
   IndexT *cu_index;
   NodeT *cu_neighbors;
   FeatureT *cu_features;
-  size_t index_size = g->index.size() * sizeof(IndexT);
-  size_t neighbors_size = g->neighbors.size() * sizeof(NodeT);
-  size_t features_size = features.size() * sizeof(FeatureT);
-  CUDA_ERRCHK(cudaMalloc((void **)&cu_index, index_size));
-  CUDA_ERRCHK(cudaMalloc((void **)&cu_neighbors, neighbors_size));
-  CUDA_ERRCHK(cudaMalloc((void **)&cu_features, features_size));
-  CUDA_ERRCHK(cudaMemcpy(cu_index, g->index.data(), index_size,
+  size_t size_index = (g->num_idx_nodes + 1) * sizeof(IndexT);
+  size_t size_neighbors = (g->index.get()[g->num_idx_nodes]) * sizeof(NodeT);
+  size_t size_features = feature_count * sizeof(FeatureT);
+  CUDA_ERRCHK(cudaMalloc((void **)&cu_index, size_index));
+  CUDA_ERRCHK(cudaMalloc((void **)&cu_neighbors, size_neighbors));
+  CUDA_ERRCHK(cudaMalloc((void **)&cu_features, size_features));
+  CUDA_ERRCHK(
+      cudaMemcpy(cu_index, g->index.get(), size_index, cudaMemcpyHostToDevice));
+  CUDA_ERRCHK(cudaMemcpy(cu_neighbors, g->neighbors.get(), size_neighbors,
                          cudaMemcpyHostToDevice));
-  CUDA_ERRCHK(cudaMemcpy(cu_neighbors, g->neighbors.data(), neighbors_size,
-                         cudaMemcpyHostToDevice));
-  CUDA_ERRCHK(cudaMemcpy(cu_features, features.data(), features_size,
+  CUDA_ERRCHK(cudaMemcpy(cu_features, features.get(), size_features,
                          cudaMemcpyHostToDevice));
 
   /*dummy_aggregate_kernel<<<1, 32>>>(cu_index, cu_neighbors, cu_features,*/

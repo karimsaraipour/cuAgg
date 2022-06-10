@@ -37,6 +37,12 @@ __global__ void aggregate_dyn(const IndexT *const index,
                               const FeatureT *const in_features,
                               FeatureT *const out_features,
                               const NodeT num_nodes, const IndexT num_features);
+
+/**
+ * Oracle CPU implementation
+ */
+void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
+                          FeatureVec &out_features, int num_features);
 /**
  * Parallel CPU implementation of aggregate.
  * Used for validation of GPU kernels.
@@ -51,7 +57,7 @@ void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
  */
 void aggregate_double_buffer_naive(
     const PartitionVec partitions, const NodeT num_idx_tiles,
-    const FeatureVec &in_features, FeatureT *const out_features,
+    const FeatureVec &in_features, FeatureVec &out_features,
     const IndexT num_features, const NodeT tile_size, AggregateFunc kernel,
     const int db_size = 2, const size_t neighbors_size = 0);
 

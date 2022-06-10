@@ -28,7 +28,7 @@ int main(int argc, char *argv[]) {
 
       // Track number of nodes in this column & total number of edges
       num_idx_nodes += part.subgraph->num_idx_nodes;
-      num_edges += part.subgraph->index[part.subgraph->num_idx_nodes];
+      num_edges += part.subgraph->index.get()[part.subgraph->num_idx_nodes];
 
       // Make sure tile is configured correctly
       assert(part.subgraph->direction == g->direction);
@@ -52,13 +52,13 @@ int main(int argc, char *argv[]) {
   }
 
   // Make sure the partition did not gain/lose any edges
-  assert(num_edges == g->index[g->num_idx_nodes]);
+  assert(num_edges == g->index.get()[g->num_idx_nodes]);
 
 // Make sure edges are exist in the original graph
 #define HAS_EDGE(g, u, v)                                                      \
-  std::find(std::begin(g->neighbors) + g->index[v],                            \
-            std::begin(g->neighbors) + g->index[v + 1],                        \
-            u) != std::begin(g->neighbors) + g->index[v + 1]
+  std::find(g->neighbors.get() + g->index.get()[v],                            \
+            g->neighbors.get() + g->index.get()[v + 1],                        \
+            u) != g->neighbors.get() + g->index.get()[v + 1]
 #define MAP_IDX(part, v) part.idx_map.base + v
 #define MAP_NGH(part, u) part.ngh_map.base + u
 
@@ -66,8 +66,9 @@ int main(int argc, char *argv[]) {
     const auto &subgraph = part.subgraph;
     for (NodeT pv = 0; pv < subgraph->num_idx_nodes; pv++) {
       NodeT v = MAP_IDX(part, pv);
-      for (IndexT i = subgraph->index[pv]; i < subgraph->index[pv + 1]; i++) {
-        NodeT pu = subgraph->neighbors[i];
+      for (IndexT i = subgraph->index.get()[pv];
+           i < subgraph->index.get()[pv + 1]; i++) {
+        NodeT pu = subgraph->neighbors.get()[i];
         NodeT u = MAP_NGH(part, pu);
         assert(HAS_EDGE(g, u, v));
       }

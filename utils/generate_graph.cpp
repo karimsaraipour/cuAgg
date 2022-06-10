@@ -90,7 +90,7 @@ int main(int argc, char *argv[]) {
 
   // Print stats for graph
   auto num_nodes = g->num_idx_nodes;
-  auto num_edges = g->index[g->num_idx_nodes];
+  auto num_edges = g->index.get()[g->num_idx_nodes];
   std::cout << "Graph name: " << prop.ofname << std::endl
             << "  # of nodes: " << num_nodes << std::endl
             << "  # of edges: " << num_edges << std::endl
