@@ -44,7 +44,7 @@ target_link_libraries(generate_graph graph)
 
 # Utility: Kernel profiling
 add_executable(profile_kernels utils/profile_kernels.cu)
-target_link_libraries(profile_kernels graph)
+target_link_libraries(profile_kernels graph agg)
 
 # Utility: Draw adjacency matrix
 if(PNGwriter_FOUND)

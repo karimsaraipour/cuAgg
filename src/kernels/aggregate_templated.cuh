@@ -1,5 +1,5 @@
-#ifndef SRC_KERNELS__AGGREGATE_TEMPLATED_CU
-#define SRC_KERNELS__AGGREGATE_TEMPLATED_CU
+#ifndef SRC_KERNELS__AGGREGATE_TEMPLATED_CUH
+#define SRC_KERNELS__AGGREGATE_TEMPLATED_CUH
 
 #include "../graph/graph.h"
 
@@ -205,4 +205,4 @@ aggregate_dyn_sm_rf(const IndexT *const index, const NodeT *const neighbors,
   }
 }
 
-#endif // SRC_KERNELS__AGGREGATE_TEMPLATED_CU
+#endif // SRC_KERNELS__AGGREGATE_TEMPLATED_CUH

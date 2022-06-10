@@ -1,6 +1,7 @@
 #include "aggregate.cuh"
 
 #include <assert.h>
+#include <math.h>
 
 #include "../cuda.cuh"
 #include "../graph/partition.h"
@@ -99,4 +100,50 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
   delete[] cu_index;
   delete[] cu_neighbors;
   delete[] cu_in_features;
+}
+
+NodeT get_square_tile_size(const IndexT num_features, const int db_size,
+                           const float sparsity) {
+  assert(sparsity > 0.000001); // != 0 hack
+
+  cudaDeviceProp prop;
+  CUDA_ERRCHK(cudaGetDeviceProperties(&prop, 0));
+
+  size_t total_mem = prop.totalGlobalMem;
+
+  // Assumption that neighbors array is not sparse will hurt the general
+  // case!
+  auto memory_used = [num_features, db_size,
+                      sparsity](const size_t num_nodes) -> size_t {
+    size_t size_feature = num_nodes * num_features * sizeof(FeatureT);
+    size_t size_index = (num_nodes + 1) * sizeof(IndexT);
+    size_t size_neighbors = (num_nodes * num_nodes) * sizeof(NodeT) * sparsity;
+    return size_feature +
+           (size_feature + size_index + size_neighbors) * db_size;
+  };
+
+  // Do binary search to find best point
+  NodeT start = 0;
+  NodeT end = std::sqrt(total_mem / sizeof(NodeT) / db_size /
+                        sparsity); // conservative estimate
+
+  auto mem_use = memory_used(end);
+  assert(total_mem <= memory_used(end));
+
+  while (start < end) {
+    NodeT mid = (start + end) / 2;
+    if (memory_used(mid) > total_mem) {
+      end = mid;
+    } else {
+      start = mid + 1;
+    }
+  }
+
+  // Could still be possible that the final tile size is one too large
+  if (memory_used(start) > total_mem) {
+    assert(memory_used(start - 1) <= total_mem);
+    return start - 1;
+  }
+
+  return start;
 }

@@ -84,8 +84,20 @@ GraphProp parse_args(int argc, char *argv[]) {
 int main(int argc, char *argv[]) {
   auto prop = parse_args(argc, argv);
 
+  // Generate graph
+  std::cout << "Generating graph..." << std::endl;
   auto g = generate_krongraph(prop.scale, prop.degree);
 
+  // Print stats for graph
+  auto num_nodes = g->num_idx_nodes;
+  auto num_edges = g->index[g->num_idx_nodes];
+  std::cout << "Graph name: " << prop.ofname << std::endl
+            << "  # of nodes: " << num_nodes << std::endl
+            << "  # of edges: " << num_edges << std::endl
+            << "  avg degree: " << (double)num_edges / num_nodes << std::endl;
+
+  // Write out graph
+  std::cout << "Writing graph to file..." << std::endl;
   std::ofstream ofs(prop.ofname, std::ofstream::out);
   ofs << *g;
   ofs.close();

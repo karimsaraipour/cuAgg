@@ -37,25 +37,6 @@ __global__ void aggregate_dyn(const IndexT *const index,
                               const FeatureT *const in_features,
                               FeatureT *const out_features,
                               const NodeT num_nodes, const IndexT num_features);
-
-/**
- * Dynamic aggergate kernel.
- * Each thread block is assigned to a node (offset by num thread blocks) and
- * given N warps.
- * Each of the N warps will work on one neighbor (offset by N).
- *
- * Assumption:
- *  Initialize kernel with threads % warpSize == 0
- *
- * Usage:
- *  aggregate_dyn<<<NUMBER OF THREAD BLOCKS, WARPS PER NODE * warpSize>>>(...)
- */
-__global__ void
-aggregate_dyn_sm(const IndexT *const index, const NodeT *const neighbors,
-                 const FeatureT *const in_features,
-                 FeatureT *const out_features, const NodeT num_nodes,
-                 const IndexT num_features, const IndexT feature_tile_size);
-
 /**
  * Parallel CPU implementation of aggregate.
  * Used for validation of GPU kernels.
@@ -75,5 +56,8 @@ void aggregate_double_buffer_naive(const PartitionVec partitions,
                                    const IndexT num_features,
                                    const NodeT tile_size, AggregateFunc kernel,
                                    const int db_size = 2);
+
+NodeT get_square_tile_size(const IndexT num_features, const int db_size = 2,
+                           const float sparsity = 0.2);
 
 #endif // SRC__AGGREGATE_CUH
