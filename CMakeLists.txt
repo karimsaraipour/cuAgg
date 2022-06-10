@@ -9,18 +9,19 @@ set(CMAKE_POLICY_DEFAULT_CMP0077 NEW)
 option(WITH_TESTS "Generate test suite" ON)
 
 # Global Configuration
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp ")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fopenmp")
+# set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -fsanitize=address")
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 
 # Set default architecture to target CC 7.0 (Tesla V100) and beyond
-if (NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
+if(NOT DEFINED CMAKE_CUDA_ARCHITECTURES)
   set(CMAKE_CUDA_ARCHITECTURES 70)
 endif()
 
 # Build tests
-if (WITH_TESTS)
+if(WITH_TESTS)
   enable_testing()
 endif()
 
@@ -32,16 +33,21 @@ add_subdirectory(deps/yaml-cpp) # yaml-cpp
 
 # Internal Libraries
 add_library(graph src/graph/graph.cpp src/graph/generator.cpp
-  src/graph/partition.cpp)
-add_library(agg src/kernels/aggregate.cu src/kernels/aggregate_cpu.cu)
+                  src/graph/partition.cpp)
+add_library(agg src/kernels/aggregate_cpu.cu src/kernels/aggregate.cu
+                src/kernels/aggregate_db.cu)
 set_target_properties(agg PROPERTIES CUDA_SEPARABLE_COMPILATION ON)
 
 # Utility: Graph generation
 add_executable(generate_graph utils/generate_graph.cpp)
 target_link_libraries(generate_graph graph)
 
+# Utility: Kernel profiling
+add_executable(profile_kernels utils/profile_kernels.cu)
+target_link_libraries(profile_kernels graph)
+
 # Utility: Draw adjacency matrix
-if (PNGwriter_FOUND)
+if(PNGwriter_FOUND)
   add_executable(visualize_graph utils/visualize_graph.cpp)
   target_link_libraries(visualize_graph graph PNGwriter::PNGwriter)
 endif()
@@ -78,3 +84,34 @@ add_test(NAME aggregate_naive COMMAND test_aggregate_naive)
 add_executable(test_aggregate_dyn tests/test_aggregate_dyn.cu)
 target_link_libraries(test_aggregate_dyn graph agg)
 add_test(NAME aggregate_dyn COMMAND test_aggregate_dyn)
+
+# Test: Check GPU dyn aggregate shared memory
+add_executable(test_aggregate_dyn_sm tests/test_aggregate_dyn_sm.cu)
+target_link_libraries(test_aggregate_dyn_sm graph agg)
+add_test(NAME aggregate_dyn_sm COMMAND test_aggregate_dyn_sm)
+
+# Test: Check GPU dyn aggregate register file
+add_executable(test_aggregate_dyn_rf tests/test_aggregate_dyn_rf.cu)
+target_link_libraries(test_aggregate_dyn_rf graph agg)
+add_test(NAME aggregate_dyn_rf COMMAND test_aggregate_dyn_rf)
+
+# Test: Check GPU dyn aggregate register file + shared memory
+add_executable(test_aggregate_dyn_sm_rf tests/test_aggregate_dyn_sm_rf.cu)
+target_link_libraries(test_aggregate_dyn_sm_rf graph agg)
+add_test(NAME aggregate_dyn_sm_rf COMMAND test_aggregate_dyn_sm_rf)
+
+# Test: Check GPU partitioned aggregate
+add_executable(test_aggregate_partition tests/test_aggregate_partition.cu)
+target_link_libraries(test_aggregate_partition graph agg)
+add_test(NAME aggregate_partition COMMAND test_aggregate_partition)
+
+# Test: Check GPU double buffering aggregate
+add_executable(test_aggregate_db_naive tests/test_aggregate_db_naive.cu)
+target_link_libraries(test_aggregate_db_naive graph agg)
+add_test(NAME aggregate_db_naive COMMAND test_aggregate_db_naive)
+
+# Test: Check GPU double buffering aggregate (sliced)
+add_executable(test_aggregate_db_naive_sliced
+               tests/test_aggregate_db_naive_sliced.cu)
+target_link_libraries(test_aggregate_db_naive_sliced graph agg)
+add_test(NAME aggregate_db_naive_sliced COMMAND test_aggregate_db_naive_sliced)

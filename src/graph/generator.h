@@ -20,4 +20,10 @@ FeatureVec generate_features(NodeT num_nodes, int num_features,
                              FeatureT min = 0, FeatureT max = 1,
                              unsigned seed = 64);
 
+/**
+ * Generates a graph of a given sparsity (i.e., sparsity% of edges will exist).
+ */
+GraphPtr generate_graph_sparsity(NodeT num_nodes, double sparsity,
+                                 unsigned seed = 0);
+
 #endif // SRC_GRAPH__GENERATOR_H

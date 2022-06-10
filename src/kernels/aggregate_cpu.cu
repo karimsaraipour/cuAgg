@@ -11,7 +11,7 @@ void aggregate_cpu(const GraphPtr g, const FeatureVec &in_features,
   for (NodeT v = 0; v < g->num_idx_nodes; v++) {
     // Node features start with itself
     for (IndexT f = 0; f < num_features; f++)
-      node_features[f] = in_features[v * num_features + f];
+      node_features[f] = 0;
 
     // Aggregate negihbors
     for (IndexT i = g->index[v]; i < g->index[v + 1]; i++) {

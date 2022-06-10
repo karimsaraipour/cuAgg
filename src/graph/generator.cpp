@@ -30,8 +30,6 @@ GraphPtr generate_krongraph(int scale, int degree) {
   Builder b(cli);
   auto g = b.MakeGraph();
 
-  // Reorder graph by descending node degree (highest-to-lowest)
-
   // Sort by descending degree
   using DegreeNodePair = std::pair<NodeT, NodeT>;
   pvector<DegreeNodePair> degree_nid_pairs(g.num_nodes());
@@ -90,4 +88,31 @@ FeatureVec generate_features(NodeT num_nodes, int num_features, FeatureT min,
     features[i] = dist(gen);
 
   return features;
+}
+
+GraphPtr generate_graph_sparsity(NodeT num_nodes, double sparsity,
+                                 unsigned seed) {
+  std::mt19937_64 gen(seed);
+  std::uniform_real_distribution<double> dist(0, 1);
+
+  auto g = GraphPtr(new Graph());
+  g->num_idx_nodes = num_nodes;
+  g->num_neighbors = num_nodes;
+  g->index.push_back(0);
+
+  // Generate based on probability
+  // (theoretically guaranteed to have num_nodes^2 * sparsity edges)
+  for (NodeT v = 0; v < num_nodes; v++) {
+    // Randomly populate neighbors
+    for (NodeT u = 0; u < num_nodes; u++) {
+      double prob = dist(gen);
+      if (prob < sparsity)
+        g->neighbors.push_back(u);
+    }
+
+    // Update index
+    g->index.push_back(g->neighbors.size());
+  }
+
+  return g;
 }

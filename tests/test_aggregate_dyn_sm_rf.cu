@@ -6,10 +6,10 @@
 #include "../src/cuda.cuh"
 #include "../src/graph/generator.h"
 #include "../src/graph/graph.h"
-#include "../src/kernels/aggregate.cuh"
+#include "../src/kernels/aggregate_templated.cuh"
 
 bool check(size_t i, float test, float oracle) {
-  bool is_correct = fabs(test - oracle) < 0.001;
+  bool is_correct = fabs(test - oracle) < 0.01;
   if (!is_correct) {
     std::cerr << "Test failed at index " << i << std::endl;
     std::cerr << "CPU: " << test << std::endl;
@@ -43,10 +43,7 @@ void aggregate_cpu_oracle(const GraphPtr g, const FeatureVec &in_features,
 int main() {
   constexpr int TEST_SCALE = 14;
   constexpr int TEST_DEGREE = 10;
-  constexpr IndexT TEST_NUM_FEATURES = 1024;
-
-  constexpr int BLOCK_DIM_X = 16;
-  constexpr int BLOCK_DIM_Y = 32;
+  constexpr IndexT TEST_NUM_FEATURES = 64;
 
   // Generate graph
   auto g = generate_krongraph(TEST_SCALE, TEST_DEGREE);
@@ -79,13 +76,9 @@ int main() {
                          cudaMemcpyHostToDevice));
   CUDA_ERRCHK(cudaMemset(cu_out_features, 0, size_features));
 
-  dim3 dim_block(BLOCK_DIM_X, BLOCK_DIM_Y);
-  dim3 dim_grid((g->num_idx_nodes + BLOCK_DIM_X - 1) / BLOCK_DIM_X,
-                (TEST_NUM_FEATURES + BLOCK_DIM_Y - 1) / BLOCK_DIM_Y);
-
-  aggregate_naive<<<dim_grid, dim_block>>>(cu_index, cu_neighbors,
-                                           cu_in_features, cu_out_features,
-                                           g->num_idx_nodes, TEST_NUM_FEATURES);
+  auto kernel = aggregate_dyn_sm_rf<TEST_NUM_FEATURES>;
+  kernel<<<64, 32 * 32>>>(cu_index, cu_neighbors, cu_in_features,
+                          cu_out_features, g->num_idx_nodes, TEST_NUM_FEATURES);
 
   // Copy results to CPU memory
   FeatureT *test_features = new FeatureT[features.size()];

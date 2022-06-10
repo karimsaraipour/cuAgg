@@ -9,8 +9,8 @@
 #include "../src/graph/partition.h"
 
 int main(int argc, char *argv[]) {
-  constexpr int TEST_SCALE = 5;
-  constexpr int TEST_DEGREE = 4;
+  constexpr int TEST_SCALE = 14;
+  constexpr int TEST_DEGREE = 10;
   constexpr int TEST_TILE_SIZE = 16;
 
   auto g = generate_krongraph(TEST_SCALE, TEST_DEGREE);
