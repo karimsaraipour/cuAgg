@@ -15,68 +15,69 @@
 #include "../src/kernels/aggregate.cuh"
 #include "../src/kernels/aggregate_templated.cuh"
 
-/*[>* Assumes only one partition. <]*/
-/*class CustomDoubleBufferKernel {*/
-/*public:*/
-/*CustomDoubleBufferKernel(const size_t tile_size_, const IndexT num_features,*/
-/*const size_t size_neighbors_ = 0)*/
-/*: tile_size(tile_size_) {*/
-/*size_index = (tile_size + 1) * sizeof(IndexT);*/
-/*size_t w_tile_size = tile_size;*/
-/*size_t size_neighbors =*/
-/*((size_neighbors_ == 0) ? w_tile_size * w_tile_size : size_neighbors_) **/
-/*sizeof(NodeT);*/
-/*size_features = tile_size * num_features * sizeof(FeatureT);*/
+/** Assumes only one partition. */
+class CustomDoubleBufferKernel {
+public:
+  CustomDoubleBufferKernel(const size_t tile_size_, const IndexT num_features_,
+                           const size_t size_neighbors_ = 0)
+      : tile_size(tile_size_), num_features(num_features_) {
+    size_index = (tile_size + 1) * sizeof(IndexT);
+    size_t w_tile_size = tile_size;
+    size_t size_neighbors =
+        ((size_neighbors_ == 0) ? w_tile_size * w_tile_size : size_neighbors_) *
+        sizeof(NodeT);
+    feature_count = tile_size * num_features;
+    size_features = feature_count * sizeof(FeatureT);
 
-/*// Allocate arrays*/
-/*CUDA_ERRCHK(cudaMalloc((void **)&cu_index, size_index));*/
-/*CUDA_ERRCHK(cudaMalloc((void **)&cu_neighbors, size_neighbors));*/
-/*CUDA_ERRCHK(cudaMalloc((void **)&cu_in_features, size_features));*/
-/*CUDA_ERRCHK(cudaMalloc((void **)&cu_out_features, size_features));*/
-/*}*/
+    // Allocate arrays
+    CUDA_ERRCHK(cudaMalloc((void **)&cu_index, size_index));
+    CUDA_ERRCHK(cudaMalloc((void **)&cu_neighbors, size_neighbors));
+    CUDA_ERRCHK(cudaMalloc((void **)&cu_in_features, size_features));
+    CUDA_ERRCHK(cudaMalloc((void **)&cu_out_features, size_features));
+  }
 
-/*~CustomDoubleBufferKernel() {*/
-/*// Free memory*/
-/*CUDA_ERRCHK(cudaFree(cu_index));*/
-/*CUDA_ERRCHK(cudaFree(cu_neighbors));*/
-/*CUDA_ERRCHK(cudaFree(cu_in_features));*/
-/*CUDA_ERRCHK(cudaFree(cu_out_features));*/
-/*}*/
+  ~CustomDoubleBufferKernel() {
+    // Free memory
+    CUDA_ERRCHK(cudaFree(cu_index));
+    CUDA_ERRCHK(cudaFree(cu_neighbors));
+    CUDA_ERRCHK(cudaFree(cu_in_features));
+    CUDA_ERRCHK(cudaFree(cu_out_features));
+  }
 
-/*void load_graph(const GraphPtr g) {*/
-/*size_t size_g_nghs = g->index.get()[g->num_idx_nodes] * sizeof(NodeT);*/
-/*std::cout << size_g_nghs << std::endl;*/
-/*CUDA_ERRCHK(cudaMemcpyAsync(cu_index, g->index.get(), size_index,*/
-/*cudaMemcpyHostToDevice));*/
-/*CUDA_ERRCHK(cudaMemcpyAsync(cu_neighbors, g->neighbors.get(), size_g_nghs,*/
-/*cudaMemcpyHostToDevice));*/
-/*}*/
+  void load_graph(const GraphPtr g) {
+    size_t size_g_nghs = g->index.get()[g->num_idx_nodes] * sizeof(NodeT);
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_index, g->index.get(), size_index,
+                                cudaMemcpyHostToDevice));
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_neighbors, g->neighbors.get(), size_g_nghs,
+                                cudaMemcpyHostToDevice));
+  }
 
-/*void load_features(const FeatureVec &in_features) {*/
-/*CUDA_ERRCHK(cudaMemcpyAsync(cu_in_features, in_features.get(),*/
-/*size_features, cudaMemcpyHostToDevice));*/
-/*}*/
+  void load_features(const FeatureVec &in_features) {
+    CUDA_ERRCHK(cudaMemcpyAsync(cu_in_features, in_features.get(),
+                                size_features, cudaMemcpyHostToDevice));
+  }
 
-/*void execute_kernel(AggregateFunc kernel) {*/
-/*// Assumes graph & input features are already loaded*/
-/*CUDA_ERRCHK(cudaMemsetAsync(cu_out_features, 0, size_features));*/
+  void execute_kernel(AggregateFunc kernel) {
+    // Assumes graph & input features are already loaded
+    CUDA_ERRCHK(cudaMemsetAsync(cu_out_features, 0, size_features));
 
-/*kernel(cu_index, cu_neighbors, cu_in_features, cu_out_features, tile_size,*/
-/*num_features);*/
-/*CUDA_ERRCHK(cudaDeviceSynchronize());*/
-/*}*/
+    kernel(cu_index, cu_neighbors, cu_in_features, cu_out_features, tile_size,
+           num_features);
+    CUDA_ERRCHK(cudaDeviceSynchronize());
+  }
 
-/*private:*/
-/*IndexT *cu_index;*/
-/*NodeT *cu_neighbors;*/
-/*FeatureT *cu_in_features;*/
-/*FeatureT *cu_out_features;*/
+private:
+  IndexT *cu_index;
+  NodeT *cu_neighbors;
+  FeatureT *cu_in_features;
+  FeatureT *cu_out_features;
 
-/*IndexT num_features;*/
-/*size_t size_index;*/
-/*size_t size_features;*/
-/*size_t tile_size;*/
-/*};*/
+  IndexT num_features;
+  IndexT feature_count;
+  size_t size_index;
+  size_t size_features;
+  size_t tile_size;
+};
 
 int main(int argc, char *argv[]) {
   if (argc != 2) {
@@ -180,7 +181,6 @@ int main(int argc, char *argv[]) {
   IndexT num_features = atoi(argv[1]);
 
   NodeT num_nodes = get_square_tile_size(num_features, 2, 1);
-  num_nodes = 1 << 13;
   std::cout << "Num nodes: " << num_nodes << std::endl;
 
   auto features = generate_features(num_nodes, num_features);
@@ -189,11 +189,25 @@ int main(int argc, char *argv[]) {
   YAML::Node results;
   results["prop"]["num_nodes"] = num_nodes;
 
-  std::vector<float> sparsities = {0.001, 0.005, 0.01, 0.05, 0.1, 0.15, 0.2,
-                                   0.3,   0.4,   0.5,  0.7,  0.9, 1};
+  std::vector<float> sparsities = {1.0f / num_nodes,    // Degree 1
+                                   2.0f / num_nodes,    // Degree 2
+                                   5.0f / num_nodes,    // Degree 5
+                                   10.f / num_nodes,    // Degree 10
+                                   20.0f / num_nodes,   // Degree 20,
+                                   50.0f / num_nodes,   // Degree 50
+                                   100.0f / num_nodes,  // Degree 100
+                                   200.0f / num_nodes,  // Degree 200
+                                   500.0f / num_nodes,  // Degree 500
+                                   1000.0f / num_nodes, // Degree 1000
+                                   0.05f,
+                                   0.1f,
+                                   0.25f,
+                                   0.5f,
+                                   0.75f,
+                                   1.0f};
 
-  /*CustomDoubleBufferKernel runner(num_nodes, num_features);*/
-  /*runner.load_features(features);*/
+  CustomDoubleBufferKernel runner(num_nodes, num_features);
+  runner.load_features(features);
 
   // Profile
   for (auto i = 0; i < sparsities.size(); i++) {
@@ -207,7 +221,7 @@ int main(int argc, char *argv[]) {
     partitions[0].idx_map = NodeMapping::new_affine(0);
     partitions[0].ngh_map = NodeMapping::new_affine(0);
 
-    /*runner.load_graph(g);*/
+    runner.load_graph(g);
 
     results["results"][i]["prop"]["sparsity"] = sparsity;
 
@@ -219,10 +233,7 @@ int main(int argc, char *argv[]) {
       auto kernel_func = ker_name_pair.first;
       auto kernel_name = ker_name_pair.second;
 
-      /*runner.execute_kernel(kernel_func);*/
-
-      aggregate_double_buffer_naive(partitions, 1, features, dummy_features,
-                                    num_features, num_nodes, kernel_func, 1);
+      runner.execute_kernel(kernel_func);
 
       CUDA_ERRCHK(cudaEventSynchronize(stop));
       float elapsed;
